@@ -15,9 +15,10 @@ import SendIcon from './SendIcon';
  */
 const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnecting, isConnected, isServerReachable }) => {
   const [messageText, setMessageText] = useState('');
+  const [mode, setMode] = useState('build');
   const handleSendMessage = () => {
     if (messageText.trim()) {
-      onSendMessage(messageText.trim());
+      onSendMessage(messageText.trim(), mode);
       setMessageText('');
     }
   };
@@ -31,12 +32,18 @@ const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnectin
       {isConnected ? (
         // Show message input and send button when connected
         <>
+          <TouchableOpacity
+            style={[styles.modeButton, { borderColor: mode === 'build' ? '#007bff' : '#6f42c1' }]}
+            onPress={() => setMode(mode === 'build' ? 'plan' : 'build')}
+          >
+            <Text style={styles.modeButtonText}>{mode.toUpperCase()}</Text>
+          </TouchableOpacity>
           <TextInput
             style={styles.messageInput}
             value={messageText}
             onChangeText={setMessageText}
             placeholder="Type your message..."
-            placeholderTextColor="#999"
+            placeholderTextColor="#999999"
             multiline
             onSubmitEditing={handleSubmitEditing}
             blurOnSubmit={false}
@@ -47,21 +54,27 @@ const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnectin
             onPress={handleSendMessage}
             disabled={!messageText.trim()}
           >
-            <SendIcon 
-              color={!messageText.trim() ? '#999' : 'white'} 
-              size={20} 
+            <SendIcon
+              color={!messageText.trim() ? '#999' : '#007bff'}
+              size={20}
             />
           </TouchableOpacity>
         </>
       ) : (
         // Show URL input and connect button when not connected
         <>
+          <TouchableOpacity
+            style={[styles.modeButton, { borderColor: mode === 'build' ? '#007bff' : '#6f42c1' }]}
+            onPress={() => setMode(mode === 'build' ? 'plan' : 'build')}
+          >
+            <Text style={styles.modeButtonText}>{mode.toUpperCase()}</Text>
+          </TouchableOpacity>
           <TextInput
             style={styles.urlInput}
             value={inputUrl}
             onChangeText={onUrlChange}
             placeholder="Enter base URL (e.g., http://10.1.1.122:63425)"
-            placeholderTextColor="#999"
+            placeholderTextColor="#999999"
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
@@ -93,43 +106,45 @@ const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnectin
 const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
-    padding: 12,
-    backgroundColor: '#e8e8e8',
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    paddingTop: 6,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    backgroundColor: 'transparent',
     gap: 8,
     alignItems: 'center',
   },
   urlInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#bbb',
+    borderColor: '#e0e0e0',
     borderRadius: 20,
     padding: 12,
     fontSize: 14,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'transparent',
   },
   messageInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#bbb',
+    borderColor: '#e0e0e0',
     borderRadius: 20,
     padding: 12,
     fontSize: 14,
-    backgroundColor: '#f0f0f0',
-    minHeight: 40,
-    maxHeight: 100,
+    backgroundColor: 'transparent',
+    minHeight: 32,
+    maxHeight: 80,
   },
   sendButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#a0a0a0',
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#007bff',
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#cccccc',
+    borderColor: '#cccccc',
   },
   sendButtonDisabled: {
     backgroundColor: '#cccccc',
@@ -137,7 +152,9 @@ const styles = StyleSheet.create({
   },
 
   connectButton: {
-    backgroundColor: '#808080',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#28a745',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 20,
@@ -145,24 +162,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   connectButtonDisabled: {
-    backgroundColor: '#cccccc',
+    borderColor: '#cccccc',
   },
   connectButtonReachable: {
-    backgroundColor: '#4CAF50', // Green when server is reachable
+    borderColor: '#4CAF50', // Green when server is reachable
   },
   connectButtonUnreachable: {
-    backgroundColor: '#F44336', // Red when server is unreachable
+    borderColor: '#F44336', // Red when server is unreachable
   },
   connectButtonText: {
-    color: 'white',
+    color: '#28a745',
     fontWeight: 'bold',
     fontSize: 14,
   },
   connectButtonTextReachable: {
-    color: 'white',
+    color: '#4CAF50',
   },
   connectButtonTextUnreachable: {
-    color: 'white',
+    color: '#F44336',
+  },
+  modeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    backgroundColor: 'transparent',
+  },
+  modeButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
 import { useSSE } from '../hooks/useSSE';
 import StatusBar from '../components/StatusBar';
 import InfoBar from '../components/InfoBar';
@@ -12,8 +12,8 @@ import LogViewer from '../components/LogViewer';
 
 export default function EventScreen() {
   const [showLogs, setShowLogs] = useState(false);
-  const [showInfoBar, setShowInfoBar] = useState(true);
-  
+  const [showInfoBar, setShowInfoBar] = useState(false);
+
   const {
     events,
     groupedUnclassifiedMessages,
@@ -32,6 +32,7 @@ export default function EventScreen() {
     disconnectFromEvents,
     selectProject,
     selectSession,
+    createSession,
     clearError,
     sendMessage,
   } = useSSE();
@@ -41,92 +42,101 @@ export default function EventScreen() {
 
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
-        <StatusBar
-          isConnected={isConnected}
-          isConnecting={isConnecting}
-          isServerReachable={isServerReachable}
-          showInfoBar={showInfoBar}
-          onToggleInfoBar={() => setShowInfoBar(!showInfoBar)}
-        />
+    <View style={{ flex: 1 }}>
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior="padding"
+          keyboardVerticalOffset={0}
+        >
+          <View style={{ flex: 1 }}>
+            <StatusBar
+              isConnected={isConnected}
+              isConnecting={isConnecting}
+              isServerReachable={isServerReachable}
+              showInfoBar={showInfoBar}
+              onToggleInfoBar={() => setShowInfoBar(!showInfoBar)}
+              projectSessions={projectSessions}
+              selectedSession={selectedSession}
+              onSessionSelect={selectSession}
+              onCreateSession={createSession}
+              baseUrl={inputUrl.replace('/global/event', '')}
+            />
 
-        {showInfoBar && (
-          <InfoBar
-            isConnected={isConnected}
-            isConnecting={isConnecting}
-            onReconnect={connectToEvents}
-            onDisconnect={disconnectFromEvents}
-            selectedProject={selectedProject}
-            selectedSession={selectedSession}
-            serverUrl={inputUrl}
-          />
-        )}
+            {showInfoBar && (
+              <InfoBar
+                isConnected={isConnected}
+                isConnecting={isConnecting}
+                onReconnect={connectToEvents}
+                onDisconnect={disconnectFromEvents}
+                selectedProject={selectedProject}
+                selectedSession={selectedSession}
+                serverUrl={inputUrl}
+              />
+            )}
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={clearError}>
-              <Text style={styles.errorClose}>✕</Text>
-            </TouchableOpacity>
+            <MessageFilter
+              events={events}
+              selectedSession={selectedSession}
+              groupedUnclassifiedMessages={groupedUnclassifiedMessages}
+              onClearError={clearError}
+              allUnclassifiedMessages={groupedUnclassifiedMessages}
+            />
+
+            <ProjectList
+              projects={projects}
+              visible={projects.length > 0 && !selectedProject}
+              onProjectSelect={selectProject}
+              onClose={() => {}}
+            />
+
+            <SessionList
+              sessions={projectSessions}
+              visible={isConnected && selectedProject && projectSessions.length > 0 && !selectedSession}
+              onSessionSelect={selectSession}
+              onClose={() => {}}
+            />
+
+            <URLInput
+              inputUrl={inputUrl}
+              onUrlChange={setInputUrl}
+              onConnect={connectToEvents}
+              onSendMessage={(text, mode) => sendMessage(text, mode)}
+              isConnecting={isConnecting}
+              isConnected={isConnected}
+              isServerReachable={isServerReachable}
+            />
           </View>
-        )}
+        </KeyboardAvoidingView>
 
-        <MessageFilter
-          events={events}
-          selectedSession={selectedSession}
-          groupedUnclassifiedMessages={groupedUnclassifiedMessages}
-          allUnclassifiedMessages={groupedUnclassifiedMessages}
-          onClearError={clearError}
+        <LogViewer
+          visible={showLogs}
+          onClose={() => setShowLogs(false)}
         />
+      </SafeAreaView>
 
-        <ProjectList
-          projects={projects}
-          visible={projects.length > 0 && !selectedProject}
-          onProjectSelect={selectProject}
-          onClose={() => {}}
-        />
-
-        <SessionList
-          sessions={projectSessions}
-          visible={isConnected && selectedProject && projectSessions.length > 0 && !selectedSession}
-          onSessionSelect={selectSession}
-          onClose={() => {}}
-        />
-
+      <View style={[styles.overlayContainer, { bottom: 70 }]}>
         <SessionStatusToggle isBusy={isSessionBusy} />
-
-        <URLInput
-          inputUrl={inputUrl}
-          onUrlChange={setInputUrl}
-          onConnect={connectToEvents}
-          onSendMessage={sendMessage}
-          isConnecting={isConnecting}
-          isConnected={isConnected}
-          isServerReachable={isServerReachable}
-        />
-
-      </KeyboardAvoidingView>
-
-      <LogViewer
-        visible={showLogs}
-        onClose={() => setShowLogs(false)}
-      />
-    </SafeAreaView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#ffffff',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#ffffff',
+  },
+  touchableArea: {
+    // Area for keyboard dismiss
+  },
+  overlayContainer: {
+    alignItems: 'center',
+    pointerEvents: 'none',
   },
   errorContainer: {
     flexDirection: 'row',

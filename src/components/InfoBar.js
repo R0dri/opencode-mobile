@@ -65,9 +65,9 @@ const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selecte
 
 const styles = StyleSheet.create({
   infoBar: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#e0e0e0',
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
@@ -88,14 +88,14 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#666666',
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 12,
-    color: '#333',
+    color: '#333333',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    backgroundColor: '#d0d0d0',
+    backgroundColor: '#f5f5f5',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,

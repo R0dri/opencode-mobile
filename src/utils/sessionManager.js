@@ -108,7 +108,7 @@ export const getSessionBaseUrl = () => {
  * @param {string} messageText - The message text to send
  * @returns {Promise<import('./opencode-types.js').SessionMessageResponse>} - Server response
  */
-export const sendMessageToSession = async (messageText) => {
+export const sendMessageToSession = async (messageText, mode = 'build') => {
   if (!currentSession || !baseUrl) {
     throw new Error('No active session. Please connect first.');
   }
@@ -117,6 +117,7 @@ export const sendMessageToSession = async (messageText) => {
 
   /** @type {import('./opencode-types.js').SessionMessageRequest} */
   const messageBody = {
+    agent: mode,
     parts: [{ type: 'text', text: messageText }]
   };
 

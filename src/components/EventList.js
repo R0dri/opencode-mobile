@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 import DebugScreen from './DebugScreen';
 
 /**
@@ -12,14 +13,88 @@ import DebugScreen from './DebugScreen';
  */
 const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError }) => {
   const [debugVisible, setDebugVisible] = useState(false);
-  const flatListRef = useRef(null);
+  const scrollViewRef = useRef(null);
+  const lastScrollTime = useRef(0);
+
+  // Markdown styles matching app theme
+  const markdownStyles = {
+    body: {
+      color: '#333333',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    paragraph: {
+      marginTop: 0,
+      marginBottom: 4,
+    },
+    heading1: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#333333',
+      marginBottom: 8,
+    },
+    heading2: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#333333',
+      marginBottom: 6,
+    },
+    heading3: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333333',
+      marginBottom: 4,
+    },
+    strong: {
+      fontWeight: 'bold',
+    },
+    em: {
+      fontStyle: 'italic',
+    },
+    code_inline: {
+      backgroundColor: '#f5f5f5',
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 3,
+      fontFamily: 'monospace',
+      fontSize: 13,
+    },
+    code_block: {
+      backgroundColor: '#f5f5f5',
+      padding: 8,
+      borderRadius: 4,
+      fontFamily: 'monospace',
+      fontSize: 13,
+      marginVertical: 4,
+    },
+    link: {
+      color: '#007bff',
+      textDecorationLine: 'underline',
+    },
+    list_item: {
+      marginBottom: 4,
+    },
+    bullet_list: {
+      marginBottom: 8,
+    },
+    ordered_list: {
+      marginBottom: 8,
+    },
+    blockquote: {
+      borderLeftWidth: 4,
+      borderLeftColor: '#e0e0e0',
+      paddingLeft: 8,
+      marginVertical: 4,
+      fontStyle: 'italic',
+    },
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      if (flatListRef.current) {
-        flatListRef.current.scrollToEnd({ animated: true });
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollToEnd({ animated: true });
       }
-    }, 100);
+    }, 150);
   };
 
   useEffect(() => {
@@ -74,23 +149,39 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
     }
 
     return (
-      <View style={[styles.eventContainer, containerStyle]}>
-        <View style={[styles.eventItem, itemStyle]}>
-          {item.type !== 'sent' && (
-            <View style={styles.eventHeader}>
-              <Text style={[styles.eventType, typeStyle]}>
-                {item.icon || ''} {item.type}
-              </Text>
-              {item.projectName && item.projectName !== 'Me' && (
-                <Text style={styles.projectBadge}>
-                  📁 {item.projectName}
-                </Text>
-              )}
+      <View key={item.id} style={[styles.eventContainer, containerStyle]}>
+        <View style={[styles.eventItem, itemStyle]} pointerEvents="box-none">
+          {item.type === 'sent' ? (
+            <View style={[styles.markdownContainer, messageStyle]} pointerEvents="box-none">
+              <Markdown
+                style={markdownStyles}
+                maxWidth="100%"
+                rules={{
+                  // Limit complex rules for performance
+                  html_inline: () => null,
+                  html_block: () => null,
+                  image: () => null,
+                }}
+              >
+                {item.message || ''}
+              </Markdown>
+            </View>
+          ) : (
+            <View style={[styles.markdownContainer, messageStyle]} pointerEvents="box-none">
+              <Markdown
+                style={markdownStyles}
+                maxWidth="100%"
+                rules={{
+                  // Limit complex rules for performance
+                  html_inline: () => null,
+                  html_block: () => null,
+                  image: () => null,
+                }}
+              >
+                {item.message || ''}
+              </Markdown>
             </View>
           )}
-          <Text style={[styles.eventMessage, messageStyle]}>
-            {item.message}
-          </Text>
         </View>
       </View>
     );
@@ -118,14 +209,15 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
         </TouchableOpacity>
       )}
 
-      <FlatList
-        ref={flatListRef}
-        data={events}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderEventItem}
+      <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={true}
-      />
+        keyboardShouldPersistTaps="handled"
+        onContentSizeChange={() => scrollToBottom()}
+      >
+        {events.map((item) => renderEventItem({ item }))}
+      </ScrollView>
 
       <DebugScreen
         unclassifiedMessages={groupedUnclassifiedMessages}
@@ -139,7 +231,10 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
 const styles = StyleSheet.create({
   eventsContainer: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#ffffff',
+  },
+  markdownContainer: {
+    alignSelf: 'flex-start',
   },
   errorContainer: {
     flexDirection: 'row',
@@ -164,18 +259,19 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   listContent: {
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   eventItem: {
-    padding: 12,
+    padding: 8,
     marginBottom: 8,
     borderRadius: 8,
     borderLeftWidth: 4,
     borderRightWidth: 0,
   },
   messageItem: {
-    backgroundColor: '#f8f8f8',
-    borderLeftColor: '#808080',
+    backgroundColor: '#ffffff',
+    borderLeftColor: '#007bff',
     borderLeftWidth: 4,
   },
   connectionItem: {
@@ -208,7 +304,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageMessage: {
-    color: '#333',
+    color: '#333333',
   },
   connectionMessage: {
     color: '#1976d2',
@@ -218,8 +314,8 @@ const styles = StyleSheet.create({
   },
   // Classified message styles
   finalizedItem: {
-    backgroundColor: '#e8e8e8',
-    borderLeftColor: '#707070',
+    backgroundColor: '#f8f9fa',
+    borderLeftColor: '#28a745',
     borderLeftWidth: 4,
   },
   finalizedType: {
@@ -259,14 +355,14 @@ const styles = StyleSheet.create({
   },
   projectBadge: {
     fontSize: 12,
-    color: '#666',
-    backgroundColor: '#d0d0d0',
+    color: '#666666',
+    backgroundColor: '#e9ecef',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   debugButton: {
-    backgroundColor: '#b0b0b0',
+    backgroundColor: '#ffc107',
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
@@ -279,8 +375,8 @@ const styles = StyleSheet.create({
   },
   // Sent message styles
   sentItem: {
-    backgroundColor: '#e0e0e0',
-    borderRightColor: '#606060',
+    backgroundColor: '#f8f9fa',
+    borderRightColor: '#007bff',
     borderRightWidth: 4,
     borderLeftWidth: 0,
   },

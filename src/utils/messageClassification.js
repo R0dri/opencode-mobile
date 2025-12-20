@@ -37,10 +37,49 @@ export const classifyMessage = (item) => {
     }
   }
 
+  // Handle loaded messages from API
+  if (payloadType === 'message.loaded') {
+    try {
+      // Extract text from parts
+      const parts = item.payload?.properties?.parts || [];
+      const textContent = Array.isArray(parts)
+        ? parts
+            .filter(part => part && part.type === 'text')
+            .map(part => part.text || '')
+            .join('\n')
+        : 'No content available';
+
+      console.log('📚 LOADED MESSAGE - parts:', parts, 'textContent:', textContent.substring(0, 50) + '...');
+      return {
+        type: 'message_loaded',
+        category: 'message',
+        projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
+        displayMessage: textContent,
+        rawData: item,
+        icon: '📚',
+        sessionId: sessionId,
+        payloadType: payloadType,
+        messageId: item.payload?.properties?.info?.id || null
+      };
+    } catch (error) {
+      console.error('❌ Error processing loaded message:', error);
+      return {
+        type: 'unclassified',
+        category: 'unclassified',
+        projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
+        displayMessage: 'Error loading message',
+        rawData: item,
+        icon: '❌',
+        sessionId: sessionId,
+        payloadType: payloadType
+      };
+    }
+  }
+
   // ONLY message.updated with summary.body gets displayed in chat
   if (payloadType === 'message.updated' && summaryBody) {
     // ✅ ONLY THIS CASE gets displayed in chat
-
+    console.log('✅ FINALIZED MESSAGE - will show in chat:', summaryBody.substring(0, 50) + '...');
     return {
       type: 'message_finalized',
       category: 'message',

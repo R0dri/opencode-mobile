@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Keyboard } from 'react-native';
 import { validateUrl } from '../utils/urlValidation';
 import { classifyMessage, groupUnclassifiedMessages } from '../utils/messageClassification';
 import { sendMessageToSession, clearSession, hasActiveSession, setCurrentSession } from '../utils/sessionManager';
@@ -54,6 +54,75 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   const generateMessageId = () => {
     messageCounterRef.current += 1;
     return `msg_${messageCounterRef.current}_${Date.now()}`;
+  };
+
+  // Load last message for session context
+  const loadLastMessage = async (sessionId) => {
+    try {
+      console.log('📚 Loading last message for session:', sessionId, 'baseUrl:', baseUrl);
+      if (!baseUrl) {
+        console.error('❌ No baseUrl available for loading last message');
+        setEvents([]);
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/session/${sessionId}/message?limit=1`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('📚 Last message response:', data);
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        const message = data[0];
+        console.log('📚 Raw message structure:', message);
+
+        // Validate message structure
+        if (!message.info || !Array.isArray(message.parts)) {
+          console.warn('📚 Invalid message structure - missing info or parts:', { info: message.info, parts: message.parts });
+          setEvents([]);
+          return;
+        }
+
+        // Transform API response to SSE-like format
+        const transformedMessage = {
+          ...message,
+          sessionId: sessionId,
+          payload: {
+            type: "message.loaded",
+            properties: {
+              info: message.info,
+              parts: message.parts
+            }
+          }
+        };
+
+        console.log('📚 Transformed message:', transformedMessage);
+        // Process the transformed message
+        const classifiedMessage = processOpencodeMessage(transformedMessage, setUnclassifiedMessages);
+        console.log('📚 Classified last message:', classifiedMessage);
+
+        // Set as initial events (replace any existing)
+        setEvents([{
+          id: generateMessageId(), // UI identifier
+          messageId: classifiedMessage.messageId, // API identifier
+          type: classifiedMessage.type,
+          category: classifiedMessage.category,
+          message: classifiedMessage.displayMessage,
+          projectName: classifiedMessage.projectName,
+          icon: classifiedMessage.icon,
+          sessionId: classifiedMessage.sessionId
+        }]);
+      } else {
+        console.log('📚 No previous messages found');
+        // No previous messages, start empty
+        setEvents([]);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load last message:', error);
+      // Don't block session selection, just start with empty chat
+      setEvents([]);
+    }
   };
 
   // Setup SSE connection for real-time messages
@@ -287,13 +356,35 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     }
   };
 
-  const selectSession = (session) => {
-    console.log('🎯 Session selected:', session.id, 'baseUrl:', baseUrl);
-    setSelectedSession(session);
-    setCurrentSession(session, baseUrl);
-    // Setup SSE connection now that session is active
-    setupSSEConnection();
-  };
+   const selectSession = (session) => {
+     console.log('🎯 Session selected:', session.id, 'baseUrl:', baseUrl);
+     setSelectedSession(session);
+     setCurrentSession(session, baseUrl);
+     // Load last message for context
+     loadLastMessage(session.id);
+     // Setup SSE connection now that session is active
+     setupSSEConnection();
+   };
+
+   const createSession = async () => {
+     try {
+       const response = await fetch(`${baseUrl}/session`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({})
+       });
+       if (!response.ok) throw new Error('Failed to create session');
+       const newSession = await response.json();
+       // Add to projectSessions
+       setProjectSessions(prev => [newSession, ...prev]);
+       // Select the new session
+       selectSession(newSession);
+       return newSession;
+     } catch (error) {
+       console.error('Create session failed:', error);
+       throw error;
+     }
+   };
 
   const disconnectFromEvents = () => {
     setIsConnected(false);
@@ -321,7 +412,7 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     setError(null);
   };
 
-  const sendMessage = async (messageText) => {
+  const sendMessage = async (messageText, mode = 'build') => {
     if (!isConnected || !hasActiveSession()) {
       console.error('❌ Cannot send message: not connected or no session');
       setError('Cannot send message: not connected to server or no session selected');
@@ -348,7 +439,10 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
 
       // Send message to server
       /** @type {import('./opencode-types.js').SessionMessageResponse} */
-      const response = await sendMessageToSession(messageText);
+      const response = await sendMessageToSession(messageText, mode);
+
+      // Auto-dismiss keyboard after successful send
+      Keyboard.dismiss();
 
     } catch (error) {
       console.error('❌ Message send failed:', error);
@@ -373,27 +467,28 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     };
   }, []);
 
-  return {
-    events,
-    unclassifiedMessages,
-    groupedUnclassifiedMessages: groupUnclassifiedMessages(unclassifiedMessages),
-    isConnected,
-    isConnecting,
-    isServerReachable,
-    error,
-    inputUrl,
-    setInputUrl,
-    session,
-    projects,
-    projectSessions,
-    selectedProject,
-    selectedSession,
-    isSessionBusy,
-    connectToEvents,
-    disconnectFromEvents,
-    selectProject,
-    selectSession,
-    clearError,
-    sendMessage,
-  };
+   return {
+     events,
+     unclassifiedMessages,
+     groupedUnclassifiedMessages: groupUnclassifiedMessages(unclassifiedMessages),
+     isConnected,
+     isConnecting,
+     isServerReachable,
+     error,
+     inputUrl,
+     setInputUrl,
+     session,
+     projects,
+     projectSessions,
+     selectedProject,
+     selectedSession,
+     isSessionBusy,
+     connectToEvents,
+     disconnectFromEvents,
+     selectProject,
+     selectSession,
+     createSession,
+     clearError,
+     sendMessage,
+   };
 };

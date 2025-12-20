@@ -1,0 +1,73 @@
+{
+  "agent": {
+    "name": "opencode-mobile-agent",
+    "version": "1.0.0",
+    "capabilities": [
+      "read_files",
+      "edit_files",
+      "run_commands",
+      "search_codebase"
+    ]
+  },
+  "permissions": {
+    "file_operations": {
+      "allowed_extensions": [".js", ".json", ".md", ".txt"],
+      "forbidden_paths": [
+        "node_modules/",
+        ".git/",
+        "android/",
+        "ios/",
+        "build/",
+        "dist/"
+      ],
+      "max_file_size_kb": 1024
+    },
+    "command_execution": {
+      "allowed_commands": [
+        "npm",
+        "expo",
+        "git",
+        "grep",
+        "find",
+        "ls",
+        "cat",
+        "echo"
+      ],
+      "forbidden_commands": [
+        "rm",
+        "del",
+        "format",
+        "fdisk",
+        "mkfs"
+      ],
+      "require_confirmation": [
+        "git push",
+        "npm publish",
+        "expo build"
+      ]
+    },
+    "network_access": {
+      "allowed_domains": [
+        "localhost",
+        "*.local",
+        "10.0.0.0/8",
+        "192.168.0.0/16"
+      ],
+      "blocked_protocols": ["ftp", "telnet"]
+    }
+  },
+  "restrictions": {
+    "max_concurrent_operations": 5,
+    "timeout_seconds": 300,
+    "rate_limit": {
+      "requests_per_minute": 60,
+      "file_edits_per_minute": 10
+    }
+  },
+  "safety": {
+    "backup_before_edit": true,
+    "validate_syntax": true,
+    "prevent_deletion": true,
+    "log_operations": true
+  }
+}

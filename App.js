@@ -6,7 +6,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <EventScreen />
-      <StatusBar style="auto" />
+      <StatusBar style="dark" backgroundColor="#ffffff" />
     </View>
   );
 }
@@ -14,6 +14,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#ffffff',
   },
 });
