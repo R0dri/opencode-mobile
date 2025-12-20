@@ -20,42 +20,44 @@ const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selecte
 
   return (
     <View style={styles.infoBar}>
-      <View style={styles.infoContainer}>
-        {serverUrl && (
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>🌐 Server</Text>
-            <Text style={styles.infoValue}>{serverUrl.replace('http://', '').replace('https://', '')}</Text>
-          </View>
-        )}
-        {selectedProject && (
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>📁 Project</Text>
-            <Text style={styles.infoValue}>{getProjectDisplayName(selectedProject.worktree)}</Text>
-          </View>
-        )}
-        {selectedSession && (
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>🎯 Session</Text>
-            <Text style={styles.infoValue}>{selectedSession.title}</Text>
-          </View>
-        )}
-      </View>
+      <View style={styles.contentContainer}>
+        <View style={styles.infoContainer}>
+          {serverUrl && (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>🌐 Server</Text>
+              <Text style={styles.infoValue}>{serverUrl.replace('http://', '').replace('https://', '')}</Text>
+            </View>
+          )}
+          {selectedProject && (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>📁 Project</Text>
+              <Text style={styles.infoValue}>{getProjectDisplayName(selectedProject.worktree)}</Text>
+            </View>
+          )}
+          {selectedSession && (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>🎯 Session</Text>
+              <Text style={styles.infoValue}>{selectedSession.title}</Text>
+            </View>
+          )}
+        </View>
 
-      <View style={styles.controlButtons}>
-        <TouchableOpacity
-          style={[styles.controlButton, styles.reconnectButton]}
-          onPress={onReconnect}
-          disabled={isConnecting}
-        >
-          <Text style={styles.controlButtonText}>🔄</Text>
-        </TouchableOpacity>
+        <View style={styles.controlButtons}>
+          <TouchableOpacity
+            style={[styles.controlButton, styles.reconnectButton]}
+            onPress={onReconnect}
+            disabled={isConnecting}
+          >
+            <Text style={styles.controlButtonText}>🔄</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.controlButton, styles.disconnectButton]}
-          onPress={onDisconnect}
-        >
-          <Text style={styles.controlButtonText}>❌</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.controlButton, styles.disconnectButton]}
+            onPress={onDisconnect}
+          >
+            <Text style={styles.controlButtonText}>❌</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -63,19 +65,16 @@ const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selecte
 
 const styles = StyleSheet.create({
   infoBar: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#e8e8e8',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingHorizontal: 16,
+    borderBottomColor: '#ccc',
     paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  contentContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    alignItems: 'flex-start',
   },
   infoContainer: {
     flexDirection: 'column',
@@ -96,7 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#d0d0d0',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -113,10 +112,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reconnectButton: {
-    backgroundColor: '#2196f3',
+    backgroundColor: '#808080',
   },
   disconnectButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#a0a0a0',
   },
   controlButtonText: {
     fontSize: 14,

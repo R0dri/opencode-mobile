@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 
 /**
  * DebugScreen component for displaying unclassified messages
@@ -16,6 +17,30 @@ const DebugScreen = ({ unclassifiedMessages, visible, onClose }) => {
       ...prev,
       [type]: !prev[type]
     }));
+  };
+
+  const copyToClipboard = async (content, label) => {
+    try {
+      await Clipboard.setStringAsync(content);
+      Alert.alert('Copied!', `${label} copied to clipboard`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy to clipboard');
+    }
+  };
+
+  const copyAllData = () => {
+    const allData = {
+      timestamp: new Date().toISOString(),
+      summary: {
+        payloadTypes: messageTypes.length,
+        totalMessages,
+        typesBreakdown: Object.fromEntries(
+          messageTypes.map(type => [type, unclassifiedMessages[type].length])
+        )
+      },
+      unclassifiedMessages
+    };
+    copyToClipboard(JSON.stringify(allData, null, 2), 'All debug data');
   };
 
   const renderMessageGroup = (type, messages) => {
@@ -43,12 +68,23 @@ const DebugScreen = ({ unclassifiedMessages, visible, onClose }) => {
                 <Text style={styles.messageTimestamp}>
                   {new Date().toLocaleTimeString()}
                 </Text>
-                <Text style={styles.messageProject}>
-                  📁 {message.projectName}
-                </Text>
-                <Text style={styles.messageRaw}>
-                  {JSON.stringify(message.rawData, null, 2)}
-                </Text>
+                 <View style={styles.messageHeader}>
+                   <Text style={styles.messageProject}>
+                     📁 {message.projectName}
+                   </Text>
+                   <TouchableOpacity 
+                     style={styles.copyButton}
+                     onPress={() => copyToClipboard(
+                       JSON.stringify(message.rawData, null, 2),
+                       'Message JSON'
+                     )}
+                   >
+                     <Text style={styles.copyButtonText}>📋</Text>
+                   </TouchableOpacity>
+                 </View>
+                 <Text style={styles.messageRaw}>
+                   {JSON.stringify(message.rawData, null, 2)}
+                 </Text>
               </View>
             ))}
           </View>
@@ -72,15 +108,27 @@ const DebugScreen = ({ unclassifiedMessages, visible, onClose }) => {
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>
-              Debug Screen ⚠️
-            </Text>
-            <Text style={styles.subtitle}>
-              {totalMessages} unclassified messages
-            </Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <Text style={styles.title}>
+                Debug Screen ⚠️
+              </Text>
+              <Text style={styles.subtitle}>
+                {messageTypes.length} payload types • {totalMessages} total messages
+              </Text>
+            </View>
+            <View style={styles.headerButtons}>
+              {messageTypes.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.copyAllButton} 
+                  onPress={copyAllData}
+                >
+                  <Text style={styles.copyAllButtonText}>📋 Copy All</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView style={styles.content}>
@@ -117,12 +165,16 @@ const styles = StyleSheet.create({
     minHeight: '50%',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
     fontSize: 20,
@@ -133,6 +185,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  copyAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#4CAF50',
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  copyAllButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   closeButton: {
     width: 32,
@@ -207,11 +271,27 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
+  messageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   messageProject: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    flex: 1,
+  },
+  copyButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#2196F3',
+    borderRadius: 4,
+  },
+  copyButtonText: {
+    color: 'white',
+    fontSize: 12,
   },
   messageRaw: {
     fontSize: 12,

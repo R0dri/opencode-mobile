@@ -12,7 +12,7 @@ import './opencode-types.js';
  */
 export const fetchProjects = async (baseUrl) => {
   try {
-    console.log('📁 Fetching projects from:', `${baseUrl}/project`);
+
 
     const response = await fetch(`${baseUrl}/project`, {
       method: 'GET',
@@ -27,7 +27,7 @@ export const fetchProjects = async (baseUrl) => {
 
     /** @type {Array<import('./opencode-types.js').Project>} */
     const projects = await response.json();
-    console.log('✅ Fetched projects:', projects.length);
+
     return projects;
   } catch (error) {
     console.error('❌ Project fetch failed:', error);
@@ -43,7 +43,7 @@ export const fetchProjects = async (baseUrl) => {
  */
 export const fetchSessionsForProject = async (baseUrl, projectId) => {
   try {
-    console.log('🎯 Fetching sessions for project:', projectId);
+
 
     const response = await fetch(`${baseUrl}/session`, {
       method: 'GET',
@@ -61,7 +61,7 @@ export const fetchSessionsForProject = async (baseUrl, projectId) => {
 
     // Filter sessions by project ID
     const projectSessions = allSessions.filter(session => session.projectID === projectId);
-    console.log('✅ Filtered sessions for project:', projectSessions.length);
+
     return projectSessions;
   } catch (error) {
     console.error('❌ Session fetch failed:', error);

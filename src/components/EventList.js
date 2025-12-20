@@ -27,34 +27,21 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
   }, [events]);
 
   const renderEventItem = ({ item }) => {
+    console.log('🎨 RENDERING EVENT:', item.type, item.category, item.message?.substring(0, 50) + '...');
+    // Don't render connection messages in the main UI - only show in logs
+    if (item.type === 'connection') {
+      return null;
+    }
+
+    // Don't render unclassified messages in the main UI
+    if (item.type === 'unclassified') {
+      return null;
+    }
+
     let itemStyle, typeStyle, messageStyle, containerStyle;
 
     // Determine styling based on message type
     switch (item.type) {
-      case 'finalized':
-        itemStyle = styles.finalizedItem;
-        typeStyle = styles.finalizedType;
-        messageStyle = styles.finalizedMessage;
-        containerStyle = styles.leftAlignedContainer;
-        break;
-      case 'streaming':
-        itemStyle = styles.streamingItem;
-        typeStyle = styles.streamingType;
-        messageStyle = styles.streamingMessage;
-        containerStyle = styles.leftAlignedContainer;
-        break;
-      case 'session':
-        itemStyle = styles.sessionItem;
-        typeStyle = styles.sessionType;
-        messageStyle = styles.sessionMessage;
-        containerStyle = styles.leftAlignedContainer;
-        break;
-      case 'unclassified':
-        itemStyle = styles.unclassifiedItem;
-        typeStyle = styles.unclassifiedType;
-        messageStyle = styles.unclassifiedMessage;
-        containerStyle = styles.leftAlignedContainer;
-        break;
       case 'sent':
         itemStyle = styles.sentItem;
         typeStyle = styles.sentType;
@@ -67,10 +54,16 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
         messageStyle = styles.errorMessage;
         containerStyle = styles.leftAlignedContainer;
         break;
-      case 'connection':
-        itemStyle = styles.connectionItem;
-        typeStyle = styles.connectionType;
-        messageStyle = styles.connectionMessage;
+      case 'session_status':
+        itemStyle = styles.sessionStatusItem;
+        typeStyle = styles.sessionStatusType;
+        messageStyle = styles.sessionStatusMessage;
+        containerStyle = styles.leftAlignedContainer;
+        break;
+      case 'message_finalized':
+        itemStyle = styles.finalizedItem;
+        typeStyle = styles.finalizedType;
+        messageStyle = styles.finalizedMessage;
         containerStyle = styles.leftAlignedContainer;
         break;
       default:
@@ -83,16 +76,18 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
     return (
       <View style={[styles.eventContainer, containerStyle]}>
         <View style={[styles.eventItem, itemStyle]}>
-          <View style={styles.eventHeader}>
-            <Text style={[styles.eventType, typeStyle]}>
-              {item.icon || ''} {item.type}
-            </Text>
-            {item.projectName && item.projectName !== 'Me' && (
-              <Text style={styles.projectBadge}>
-                📁 {item.projectName}
+          {item.type !== 'sent' && (
+            <View style={styles.eventHeader}>
+              <Text style={[styles.eventType, typeStyle]}>
+                {item.icon || ''} {item.type}
               </Text>
-            )}
-          </View>
+              {item.projectName && item.projectName !== 'Me' && (
+                <Text style={styles.projectBadge}>
+                  📁 {item.projectName}
+                </Text>
+              )}
+            </View>
+          )}
           <Text style={[styles.eventMessage, messageStyle]}>
             {item.message}
           </Text>
@@ -176,18 +171,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 8,
     borderLeftWidth: 4,
+    borderRightWidth: 0,
   },
   messageItem: {
-    backgroundColor: 'white',
-    borderLeftColor: '#6200ee',
+    backgroundColor: '#f8f8f8',
+    borderLeftColor: '#808080',
+    borderLeftWidth: 4,
   },
   connectionItem: {
     backgroundColor: '#e3f2fd',
     borderLeftColor: '#2196f3',
+    borderLeftWidth: 4,
   },
   errorItem: {
     backgroundColor: '#ffebee',
     borderLeftColor: '#f44336',
+    borderLeftWidth: 4,
   },
   eventType: {
     fontWeight: 'bold',
@@ -219,8 +218,9 @@ const styles = StyleSheet.create({
   },
   // Classified message styles
   finalizedItem: {
-    backgroundColor: '#e8f5e9',
-    borderLeftColor: '#4CAF50',
+    backgroundColor: '#e8e8e8',
+    borderLeftColor: '#707070',
+    borderLeftWidth: 4,
   },
   finalizedType: {
     color: '#4CAF50',
@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
   streamingItem: {
     backgroundColor: '#e3f2fd',
     borderLeftColor: '#2196F3',
+    borderLeftWidth: 4,
   },
   streamingType: {
     color: '#2196F3',
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
   sessionItem: {
     backgroundColor: '#f5f5f5',
     borderLeftColor: '#9E9E9E',
+    borderLeftWidth: 4,
   },
   sessionType: {
     color: '#9E9E9E',
@@ -248,16 +250,7 @@ const styles = StyleSheet.create({
   sessionMessage: {
     color: '#424242',
   },
-  unclassifiedItem: {
-    backgroundColor: '#fff8e1',
-    borderLeftColor: '#FFC107',
-  },
-  unclassifiedType: {
-    color: '#FFC107',
-  },
-  unclassifiedMessage: {
-    color: '#f57f17',
-  },
+
   eventHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -267,13 +260,13 @@ const styles = StyleSheet.create({
   projectBadge: {
     fontSize: 12,
     color: '#666',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#d0d0d0',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   debugButton: {
-    backgroundColor: '#FFC107',
+    backgroundColor: '#b0b0b0',
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
@@ -286,13 +279,27 @@ const styles = StyleSheet.create({
   },
   // Sent message styles
   sentItem: {
-    backgroundColor: '#E3F2FD',
-    borderLeftColor: '#2196F3',
+    backgroundColor: '#e0e0e0',
+    borderRightColor: '#606060',
+    borderRightWidth: 4,
+    borderLeftWidth: 0,
   },
   sentType: {
     color: '#2196F3',
   },
   sentMessage: {
+    color: '#1565C0',
+  },
+  // Session status styles
+  sessionStatusItem: {
+    backgroundColor: '#e3f2fd',
+    borderLeftColor: '#2196F3',
+    borderLeftWidth: 4,
+  },
+  sessionStatusType: {
+    color: '#2196F3',
+  },
+  sessionStatusMessage: {
     color: '#1565C0',
   },
   // Message alignment containers

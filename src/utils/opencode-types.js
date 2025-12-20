@@ -5,28 +5,47 @@
 
 /**
  * @typedef {Object} Session
- * @property {string} id - Unique session identifier
- * @property {string} projectID - Project identifier
- * @property {string} directory - Working directory
- * @property {string} [parentID] - Parent session ID
- * @property {Object} [summary] - Session summary
- * @property {number} summary.additions - Lines added
- * @property {number} summary.deletions - Lines deleted
- * @property {number} summary.files - Files changed
- * @property {Array<Object>} [summary.diffs] - File diffs
- * @property {Object} [share] - Sharing information
- * @property {string} share.url - Share URL
- * @property {string} title - Session title
- * @property {string} version - Version
- * @property {Object} time - Timestamps
- * @property {number} time.created - Creation timestamp
- * @property {number} time.updated - Last update timestamp
- * @property {number} [time.compacting] - Compacting timestamp
- * @property {Object} [revert] - Revert information
- * @property {string} revert.messageID - Message ID to revert to
- * @property {string} [revert.partID] - Part ID to revert to
- * @property {string} [revert.snapshot] - Snapshot to revert to
- * @property {string} [revert.diff] - Diff to revert to
+ * @property {string} id - Unique session identifier (e.g., "202501181111-3519")
+ * @property {string} projectID - Project identifier (UUID format)
+ * @property {string} directory - Working directory path
+ * @property {string} [parentID] - Parent session ID for conversation branches
+ * @property {Object} [summary] - Session summary statistics
+ * @property {number} summary.additions - Lines added to codebase
+ * @property {number} summary.deletions - Lines deleted from codebase
+ * @property {number} summary.files - Number of files changed
+ * @property {Array<Object>} [summary.diffs] - File diff information
+ * @property {Object} [share] - Sharing capabilities and URLs
+ * @property {string} share.url - Shareable URL for session
+ * @property {string} title - Human-readable session title
+ * @property {string} version - Session version identifier
+ * @property {Object} time - Timestamp information for lifecycle events
+ * @property {number} time.created - Unix timestamp when session was created
+ * @property {number} time.updated - Unix timestamp of last session update
+ * @property {number} [time.compacting] - Unix timestamp when session was compacted
+ * @property {Object} [revert] - Revert state management
+ * @property {string} revert.messageID - Message ID to revert conversation to
+ * @property {string} [revert.partID] - Specific part ID to revert to
+ * @property {string} [revert.snapshot] - Snapshot ID to revert to
+ * @property {string} [revert.diff] - Diff ID to revert to
+ * 
+ * @example
+ * // Example session object:
+ * {
+ *   "id": "202501181111-3519",
+ *   "projectID": "12345678-1234-1234-1234-123456789abc",
+ *   "directory": "/Users/user/project",
+ *   "title": "Implement user authentication",
+ *   "version": "v1.0",
+ *   "time": {
+ *     "created": 1737184267000,
+ *     "updated": 1737184569000
+ *   },
+ *   "summary": {
+ *     "additions": 150,
+ *     "deletions": 25,
+ *     "files": 8
+ *   }
+ * }
  */
 
 /**

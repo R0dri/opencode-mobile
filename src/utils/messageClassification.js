@@ -1,77 +1,71 @@
+import { getProjectDisplayName } from './projectManager.js';
+
 /**
  * Message classification utility for opencode SSE messages
  * @param {import('./opencode-types.js').GlobalEvent} item - The SSE message item to classify
  * @returns {Object} - Classified message with metadata
  */
 export const classifyMessage = (item) => {
-  if (!item || !item.payload) {
+  const payloadType = item.payload?.type || 'unknown';
+  const summaryBody = item.payload?.properties?.info?.summary?.body;
+
+  // Fix session ID extraction - check multiple possible locations
+  const sessionId = item.session_id ||
+                    item.sessionId ||
+                    item.payload?.properties?.sessionID ||
+                    item.payload?.properties?.info?.sessionID ||
+                    item.payload?.properties?.part?.sessionID || // For message.part.updated
+                    null;
+
+
+
+  // Handle session status messages specially (for thinking indicator)
+  if (payloadType === 'session.status') {
+    const statusType = item.payload?.properties?.status?.type;
+    if (statusType === 'busy' || statusType === 'idle') {
+      return {
+        type: 'session_status',
+        category: 'internal', // Don't show in UI
+        projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
+        displayMessage: `Session status: ${statusType}`,
+        rawData: item,
+        icon: '🔄',
+        sessionId: sessionId,
+        payloadType: payloadType,
+        sessionStatus: statusType
+      };
+    }
+  }
+
+  // ONLY message.updated with summary.body gets displayed in chat
+  if (payloadType === 'message.updated' && summaryBody) {
+    // ✅ ONLY THIS CASE gets displayed in chat
+
     return {
-      type: 'unknown',
-      category: 'unclassified',
-      projectName: 'Unknown Project',
-      displayMessage: JSON.stringify(item, null, 2),
+      type: 'message_finalized',
+      category: 'message',
+      projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
+      displayMessage: summaryBody, // Use the body content directly
       rawData: item,
-      icon: '❓'
+      icon: '✅',
+      sessionId: sessionId,
+      payloadType: payloadType,
+      messageId: item.payload?.properties?.info?.id || null
     };
   }
 
-  const { directory, payload } = item;
-  const { type, properties } = payload;
-
-  // Extract project name from directory path
-  const projectName = extractProjectName(directory);
-
-  // Classify by payload.type
-  let classification;
-  let icon;
-  let category;
-
-  if (type === 'message.updated') {
-    classification = 'finalized';
-    icon = '✅';
-    category = 'message';
-  } else if (type === 'message.part.updated') {
-    classification = 'streaming';
-    icon = '📝';
-    category = 'message';
-  } else if (type.startsWith('session.')) {
-    classification = 'session';
-    icon = '🔄';
-    category = 'session';
-  } else {
-    classification = 'unclassified';
-    icon = '⚠️';
-    category = 'unclassified';
-  }
-
-  // Format display message
-  const displayMessage = formatClassifiedMessage(item, projectName, classification, icon);
+  // EVERYTHING else goes to unclassified (debug screen only)
 
   return {
-    type: classification,
-    category,
-    projectName,
-    displayMessage,
+    type: 'unclassified',
+    category: 'unclassified',
+    projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
+    displayMessage: JSON.stringify(item, null, 2),
     rawData: item,
-    icon,
-    payloadType: type,
-    info: properties?.info || null
+    icon: '⚠️',
+    sessionId: sessionId,
+    payloadType: payloadType
   };
-};
-
-/**
- * Extract project name from directory path
- * @param {string} directory - Directory path
- * @returns {string} - Project name
- */
-export const extractProjectName = (directory) => {
-  if (!directory || typeof directory !== 'string') {
-    return 'Unknown Project';
-  }
-
-  // Split by '/' and get last non-empty part
-  const parts = directory.split('/').filter(part => part.trim().length > 0);
-  return parts.length > 0 ? parts[parts.length - 1] : 'Unknown Project';
 };
 
 /**
@@ -97,20 +91,20 @@ const formatClassifiedMessage = (item, projectName, classification, icon) => {
 };
 
 /**
- * Group unclassified messages by type for debugging
+ * Group unclassified messages by payload type for debugging
  * @param {Array} messages - Array of classified messages
- * @returns {Object} - Grouped messages by type
+ * @returns {Object} - Grouped messages by payload type
  */
 export const groupUnclassifiedMessages = (messages) => {
   const grouped = {};
 
   messages.forEach(message => {
     if (message.category === 'unclassified') {
-      const type = message.payloadType || 'unknown';
-      if (!grouped[type]) {
-        grouped[type] = [];
+      const payloadType = message.payloadType || 'unknown';
+      if (!grouped[payloadType]) {
+        grouped[payloadType] = [];
       }
-      grouped[type].push(message);
+      grouped[payloadType].push(message);
     }
   });
 

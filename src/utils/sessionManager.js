@@ -18,7 +18,7 @@ let baseUrl = null;
  */
 export const createSession = async (serverBaseUrl) => {
   try {
-    console.log('🔄 Creating new session at:', `${serverBaseUrl}/session`);
+
 
     const response = await fetch(`${serverBaseUrl}/session`, {
       method: 'POST',
@@ -34,7 +34,7 @@ export const createSession = async (serverBaseUrl) => {
 
     /** @type {import('./opencode-types.js').Session} */
     const session = await response.json();
-    console.log('✅ Session created:', session);
+
 
     if (!session.id) {
       throw new Error('Invalid session response: missing session id');
@@ -43,7 +43,7 @@ export const createSession = async (serverBaseUrl) => {
     currentSession = session;
     baseUrl = serverBaseUrl;
 
-    console.log('📝 Session stored:', session.id);
+
     return session;
   } catch (error) {
     console.error('❌ Session creation failed:', error);
@@ -81,7 +81,7 @@ export const hasActiveSession = () => {
  * @param {string} serverBaseUrl - Base URL of the server
  */
 export const setCurrentSession = (session, serverBaseUrl) => {
-  console.log('🎯 Setting current session:', session.id);
+
   currentSession = session;
   baseUrl = serverBaseUrl;
 };
@@ -90,7 +90,7 @@ export const setCurrentSession = (session, serverBaseUrl) => {
  * Clear the current session (for logout/disconnect)
  */
 export const clearSession = () => {
-  console.log('🗑️ Clearing session:', currentSession?.id);
+
   currentSession = null;
   baseUrl = null;
 };
@@ -120,8 +120,7 @@ export const sendMessageToSession = async (messageText) => {
     parts: [{ type: 'text', text: messageText }]
   };
 
-  console.log('📤 Sending message to:', messageUrl);
-  console.log('📝 Message body:', messageBody);
+
 
   try {
     const response = await fetch(messageUrl, {

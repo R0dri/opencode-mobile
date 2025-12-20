@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "expo": "~54.0.30",
+    "expo-clipboard": "~4.1.1",
+    "expo-file-system": "~15.4.5",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-sse": "^1.2.1",
-    "react-native-svg": "^15.15.1"
+    "react-native-svg": "^15.12.1"
   },
   "private": true
 }

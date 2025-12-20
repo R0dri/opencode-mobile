@@ -2,13 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { validateUrl } from '../utils/urlValidation';
 import { classifyMessage, groupUnclassifiedMessages } from '../utils/messageClassification';
-import { createSession, sendMessageToSession, clearSession, hasActiveSession, getCurrentSession, setCurrentSession } from '../utils/sessionManager';
+import { sendMessageToSession, clearSession, hasActiveSession, setCurrentSession } from '../utils/sessionManager';
 import { fetchProjects, fetchSessionsForProject } from '../utils/projectManager';
 import '../utils/opencode-types.js';
 
 // Import react-native-sse as default export (package uses module.exports)
 import EventSource from 'react-native-sse';
-console.log('✅ react-native-sse loaded:', EventSource);
 
 /**
  * Custom hook for managing SSE (Server-Sent Events) connections
@@ -45,8 +44,11 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   const [selectedProject, setSelectedProject] = useState(null);
   /** @type {import('./opencode-types.js').Session|null} */
   const [selectedSession, setSelectedSession] = useState(null);
+  const [isSessionBusy, setIsSessionBusy] = useState(false);
+  const [baseUrl, setBaseUrl] = useState(null);
   const eventSourceRef = useRef(null);
   const messageCounterRef = useRef(0); // Unique message ID counter
+  const selectedSessionRef = useRef(null); // Ref to track selectedSession for SSE callbacks
 
   // Generate unique message IDs
   const generateMessageId = () => {
@@ -54,136 +56,9 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     return `msg_${messageCounterRef.current}_${Date.now()}`;
   };
 
-  // Test connectivity to the configured server on startup
-  useEffect(() => {
-    console.log('SSE Debug Info:', {
-      fetchAvailable: typeof fetch !== 'undefined',
-      readableStreamAvailable: typeof ReadableStream !== 'undefined',
-      textDecoderAvailable: typeof TextDecoder !== 'undefined',
-      platform: Platform.OS,
-      reactNativeVersion: Platform.Version
-    });
-
-    // Test connectivity to the initial server URL
-    const testUrl = inputUrl.replace('/global/event', '');
-    console.log('🌐 Testing connectivity to:', testUrl);
-
-    // Show connecting state during initial connectivity test
-    setIsConnecting(true);
-    setEvents(prev => [...prev, {
-      id: generateMessageId(),
-      type: 'connection',
-      message: `🌐 Testing connection to ${testUrl}...`
-    }]);
-
-    fetch(testUrl, { method: 'HEAD' })
-      .then(response => {
-        console.log('✅ Initial connectivity test successful:', {
-          ok: response.ok,
-          status: response.status,
-          url: testUrl
-        });
-
-        setIsConnecting(false);
-        setIsServerReachable(true);
-        setEvents(prev => [...prev, {
-          id: generateMessageId(),
-          type: 'connection',
-          message: `✅ Server reachable at ${testUrl}`
-        }]);
-      })
-      .catch(error => {
-        console.log('❌ Initial connectivity test failed:', {
-          error: error.message,
-          name: error.name,
-          url: testUrl
-        });
-
-        setIsConnecting(false);
-        setIsServerReachable(false);
-        setEvents(prev => [...prev, {
-          id: generateMessageId(),
-          type: 'connection',
-          message: `⚠️ Server not reachable at ${testUrl} - ${error.message}`
-        }]);
-      });
-  }, []); // Empty dependency array - only run once on mount
-
-  const connectToEvents = async () => {
-    console.log('🔌 CONNECT BUTTON PRESSED!');
-    console.log('Input URL:', inputUrl);
-
-    let urlToUse = inputUrl.trim();
-    console.log('Trimmed URL:', urlToUse);
-
-    if (!validateUrl(urlToUse)) {
-      console.log('❌ URL validation failed');
-      setError('Please enter a valid URL (must start with http:// or https://)');
-      return;
-    }
-
-    // Append /global/event if not already present
-    if (!urlToUse.endsWith('/global/event')) {
-      urlToUse = urlToUse.replace(/\/$/, '') + '/global/event';
-    }
-
-    console.log('📡 Final URL to connect:', urlToUse);
-    console.log('🔄 Setting state to connecting...');
-
-    // Immediately update UI to show connecting state
-    setIsConnecting(true);
-    setIsConnected(false);
-    setError(null);
-    setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: '🔄 Connecting to server...' }]);
-
-    // Test connectivity if not already known reachable
-    if (isServerReachable !== true) {
-      console.log('🌐 Testing connectivity to server...');
-      try {
-        const response = await fetch(urlToUse, { method: 'HEAD' });
-        if (!response.ok) {
-          throw new Error(`Server responded with status ${response.status}`);
-        }
-        console.log('✅ Connectivity confirmed - server is reachable');
-        setIsServerReachable(true);
-      } catch (error) {
-        console.log('❌ Connectivity test failed:', error.message);
-        setError(`Cannot reach server: ${error.message}`);
-        setIsConnected(false);
-        setIsConnecting(false);
-        setIsServerReachable(false);
-        setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: '❌ Failed to connect to server' }]);
-        return;
-      }
-    } else {
-      console.log('✅ Server already confirmed reachable - skipping connectivity test');
-    }
-
-    // At this point, we know the server is reachable, so set connected state
-    console.log('✅ Server connectivity confirmed - setting connected state');
-    setIsConnected(true);
-    setIsConnecting(false);
-    setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: `✅ Successfully connected to ${urlToUse}` }]);
-
-    // Fetch projects
+  // Setup SSE connection for real-time messages
+  const setupSSEConnection = () => {
     try {
-      console.log('📁 Fetching available projects...');
-      const baseUrl = urlToUse.replace('/global/event', '');
-      const availableProjects = await fetchProjects(baseUrl);
-      setProjects(availableProjects);
-      setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: `📁 Found ${availableProjects.length} projects - select one to continue` }]);
-      console.log('✅ Projects fetched and ready for selection');
-    } catch (projectError) {
-      console.error('❌ Project fetch failed:', projectError);
-      setError(`Failed to fetch projects: ${projectError.message}`);
-      setEvents(prev => [...prev, { id: generateMessageId(), type: 'error', message: `Failed to fetch projects: ${projectError.message}` }]);
-      return;
-    }
-
-    // Create SSE connection for real-time messages (don't wait for it)
-    try {
-      console.log('🏗️ Creating SSE connection for real-time messages...');
-
       // Close existing connection if any
       if (eventSourceRef.current) {
         try {
@@ -193,131 +68,253 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
         }
       }
 
-      if (!EventSource) {
-        console.log('⚠️ EventSource not available - skipping SSE connection');
+      // Check if EventSource is available
+      if (typeof EventSource === 'undefined') {
+        setError('Real-time messages not supported on this platform');
         return;
       }
 
-      const eventSource = new EventSource(urlToUse, {
-        pollingInterval: 3000,
-        withCredentials: false,
+      // Use the baseUrl to construct SSE URL
+      const sseUrl = baseUrl + '/global/event';
+      console.log('EventSource created for:', sseUrl);
+      eventSourceRef.current = new EventSource(sseUrl, {
         headers: {
           'Accept': 'text/event-stream',
           'Cache-Control': 'no-cache',
         },
       });
+      console.log('EventSource readyState after creation:', eventSourceRef.current.readyState);
 
-      console.log('✅ EventSource created for real-time messages');
-      eventSourceRef.current = eventSource;
-
-      eventSource.addEventListener("open", (event) => {
+      eventSourceRef.current.addEventListener("open", (event) => {
         console.log("🚀 SSE connection opened successfully!");
-        console.log('EventSource readyState:', eventSource.readyState);
-        setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: `📡 Real-time connection established` }]);
+        console.log('EventSource readyState:', eventSourceRef.current.readyState);
+        console.log('📡 Real-time connection established');
       });
 
+      // Helper function to update or add messages
+      const updateOrAddMessage = (events, newMessage) => {
+        // Handle session status messages for busy toggle
+        if (newMessage.payloadType === 'session.status' && newMessage.sessionStatus) {
+          const statusType = newMessage.sessionStatus;
+          const messageSessionId = newMessage.sessionId;
+          const selectedSessionId = selectedSessionRef.current?.id;
+
+          if (messageSessionId === selectedSessionId) {
+            setIsSessionBusy(statusType === 'busy');
+          }
+        }
+
+        // Filter messages by selected session ID if a session is selected
+        const currentSelectedSession = selectedSessionRef.current;
+        console.log(`🔍 SESSION FILTER: message.sessionId=${newMessage.sessionId}, selectedSession.id=${currentSelectedSession?.id}`);
+        if (currentSelectedSession && newMessage.sessionId !== currentSelectedSession.id && newMessage.sessionId !== undefined) {
+          console.log('🚫 FILTERED OUT - session mismatch');
+          return events; // Don't add messages from other sessions
+        }
+
+        // If this is a part update with a message_id, try to find and update
+        if (newMessage.messageId) {
+          const existingIndex = events.findIndex(e => e.messageId === newMessage.messageId);
+          if (existingIndex >= 0) {
+            console.log('🔄 Updating existing message:', newMessage.messageId);
+            // Update existing message
+            return events.map((e, i) =>
+              i === existingIndex
+                ? { ...e, message: newMessage.displayMessage }
+                : e
+            );
+          }
+        }
+        // Otherwise, add as new message
+        console.log('➕ Adding new message:', newMessage.messageId || 'no-id', 'type:', newMessage.type);
+        return [...events, {
+          id: generateMessageId(), // UI identifier
+          messageId: newMessage.messageId, // API identifier for updates
+          type: newMessage.type,
+          category: newMessage.category,
+          message: newMessage.displayMessage,
+          projectName: newMessage.projectName,
+          icon: newMessage.icon,
+          sessionId: newMessage.sessionId // Store session ID for filtering
+        }];
+      };
+
       let messageCount = 0;
-      eventSource.addEventListener("message", (event) => {
+      eventSourceRef.current.addEventListener("message", (event) => {
         messageCount++;
         console.log(`🎉 SSE MESSAGE #${messageCount} RECEIVED!`);
 
-        const messageId = generateMessageId();
-        const rawMessage = event.data || 'Empty message';
-
+        const rawMessage = event.data;
+        console.log('🔍 Raw SSE message:', rawMessage.substring(0, 200) + '...');
         try {
-          const data = JSON.parse(event.data);
+          const data = JSON.parse(rawMessage);
+          console.log('✅ JSON parsing successful, processing message(s)...');
+
           if (Array.isArray(data)) {
-            data.forEach((item) => {
-              const itemId = generateMessageId();
+            console.log(`📦 Processing array of ${data.length} messages`);
+            data.forEach((item, index) => {
+              console.log(`🔄 Processing message ${index + 1}/${data.length}`);
               const classifiedMessage = processOpencodeMessage(item, setUnclassifiedMessages);
-              setEvents(prev => [...prev, {
-                id: itemId,
-                type: classifiedMessage.type,
-                category: classifiedMessage.category,
-                message: classifiedMessage.displayMessage,
-                projectName: classifiedMessage.projectName,
-                icon: classifiedMessage.icon
-              }]);
+              console.log('📊 Classified:', classifiedMessage.type, classifiedMessage.category);
+              setEvents(prev => updateOrAddMessage(prev, classifiedMessage));
             });
           } else {
+            console.log('📦 Processing single message');
             const classifiedMessage = processOpencodeMessage(data, setUnclassifiedMessages);
-            setEvents(prev => [...prev, {
-              id: messageId,
-              type: classifiedMessage.type,
-              category: classifiedMessage.category,
-              message: classifiedMessage.displayMessage,
-              projectName: classifiedMessage.projectName,
-              icon: classifiedMessage.icon
-            }]);
+            console.log('📊 Classified:', classifiedMessage.type, classifiedMessage.category);
+            setEvents(prev => updateOrAddMessage(prev, classifiedMessage));
           }
         } catch (parseError) {
-          console.log('⚠️ SSE Data is not JSON, using raw data:', rawMessage);
-          setEvents(prev => [...prev, { id: messageId, type: 'message', message: rawMessage }]);
+          // Ignore parse errors
         }
       });
 
-      eventSource.addEventListener("error", (event) => {
+      eventSourceRef.current.addEventListener("error", (event) => {
         console.log('SSE Error event:', event);
-        console.log('EventSource readyState:', eventSource.readyState);
-        console.log('EventSource url:', eventSource.url);
+        console.log('EventSource readyState:', eventSourceRef.current.readyState);
+        console.log('EventSource url:', eventSourceRef.current.url);
         // Don't change connection state for SSE errors - we're already connected via HTTP
         const errorMsg = event.message || event.error || 'Connection failed';
-        setEvents(prev => [...prev, { id: generateMessageId(), type: 'error', message: `Real-time connection error: ${errorMsg}` }]);
+        console.log(`Real-time connection error: ${errorMsg}`);
       });
 
     } catch (err) {
       console.log('⚠️ SSE connection setup failed:', err.message);
       // Don't fail the whole connection for SSE issues
-      setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: `⚠️ Real-time messages unavailable: ${err.message}` }]);
     }
   };
 
+  // Test connectivity to the configured server on startup
+  useEffect(() => {
+
+    // Test connectivity to the initial server URL
+    const testUrl = inputUrl.replace('/global/event', '');
+    console.log('🌐 Initial connectivity test for:', testUrl);
+    fetch(testUrl, { method: 'HEAD' })
+      .then(response => {
+        console.log('✅ Initial connectivity test successful');
+        setIsServerReachable(true);
+      })
+      .catch(error => {
+        console.log('❌ Initial connectivity test failed:', error.message);
+        setIsServerReachable(false);
+      });
+  }, []); // Empty dependency array - only run once on mount
+
+  // Sync selectedSession ref with state
+  useEffect(() => {
+    selectedSessionRef.current = selectedSession;
+  }, [selectedSession]);
+
+  // Auto-connect when server becomes reachable
+  useEffect(() => {
+    console.log('🔄 Auto-connect check - isServerReachable:', isServerReachable, 'isConnected:', isConnected, 'isConnecting:', isConnecting);
+    if (isServerReachable && !isConnected && !isConnecting) {
+      console.log('🚀 Auto-connecting...');
+      connectToEvents().catch(error => {
+        console.error('❌ Auto-connect failed:', error);
+        setError(`Auto-connect failed: ${error.message}`);
+      });
+    }
+  }, [isServerReachable, isConnected, isConnecting]); // Depend on connectivity state
+
+  const connectToEvents = async () => {
+    console.log('🔌 CONNECT BUTTON PRESSED - starting connection');
+    let urlToUse = inputUrl.trim();
+
+    if (!validateUrl(urlToUse)) {
+      setError('Please enter a valid URL (must start with http:// or https://)');
+      return;
+    }
+
+    // Append /global/event if not already present
+    if (!urlToUse.endsWith('/global/event')) {
+      urlToUse = urlToUse.replace(/\/$/, '') + '/global/event';
+    }
+
+    // Immediately update UI to show connecting state
+    setIsConnecting(true);
+    setIsConnected(false);
+    setError(null);
+    // Test connectivity before attempting full connection
+    if (!isServerReachable) {
+      try {
+        const response = await fetch(urlToUse, { method: 'HEAD' });
+        if (!response.ok) {
+          throw new Error(`Server responded with status ${response.status}`);
+        }
+        setIsServerReachable(true);
+      } catch (error) {
+        setError(`Cannot reach server: ${error.message}`);
+        setIsConnected(false);
+        setIsConnecting(false);
+        setIsServerReachable(false);
+        setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: '❌ Failed to connect to server' }]);
+        return;
+      }
+    }
+
+    // At this point, we know the server is reachable, so set connected state
+    setIsConnected(true);
+    setIsConnecting(false);
+    setBaseUrl(urlToUse.replace('/global/event', ''));
+    console.log('✅ Connection successful, baseUrl set to:', urlToUse.replace('/global/event', ''));
+
+    // Fetch projects
+    try {
+      const baseUrl = urlToUse.replace('/global/event', '');
+      const availableProjects = await fetchProjects(baseUrl);
+      setProjects(availableProjects);
+    } catch (projectError) {
+      console.error('❌ Project fetch failed:', projectError);
+      setError(`Failed to fetch projects: ${projectError.message}`);
+      return;
+    }
+
+
+  };
+
   const selectProject = async (project) => {
-    console.log('📁 Project selected:', project.id);
     setSelectedProject(project);
     setSelectedSession(null); // Clear previous session selection
 
     try {
-      console.log('🎯 Fetching sessions for project:', project.id);
       const sessions = await fetchSessionsForProject(inputUrl.replace('/global/event', ''), project.id);
       setProjectSessions(sessions);
-      setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: `🎯 Found ${sessions.length} sessions for project "${project.worktree}"` }]);
-      console.log('✅ Sessions fetched for project');
     } catch (error) {
       console.error('❌ Failed to fetch sessions:', error);
       setError(`Failed to fetch sessions: ${error.message}`);
-      setEvents(prev => [...prev, { id: generateMessageId(), type: 'error', message: `Failed to fetch sessions: ${error.message}` }]);
     }
   };
 
   const selectSession = (session) => {
-    console.log('🎯 Session selected:', session.id);
+    console.log('🎯 Session selected:', session.id, 'baseUrl:', baseUrl);
     setSelectedSession(session);
-    setSession(session); // Also set in local state for UI
-    // Set this session as the current session for messaging
-    setCurrentSession(session, inputUrl.replace('/global/event', ''));
-    setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: `✅ Session selected: "${session.title}" - ready to chat!` }]);
+    setCurrentSession(session, baseUrl);
+    // Setup SSE connection now that session is active
+    setupSSEConnection();
   };
 
   const disconnectFromEvents = () => {
+    setIsConnected(false);
+    setIsConnecting(false);
+    setIsServerReachable(null);
+    setEvents([]);
+    setUnclassifiedMessages([]);
+    setSelectedProject(null);
+    setSelectedSession(null);
+    setIsSessionBusy(false);
+    setBaseUrl(null);
+    clearSession();
+    // Close SSE connection
     if (eventSourceRef.current) {
       try {
         eventSourceRef.current.close();
-        eventSourceRef.current = null;
       } catch (e) {
         // Ignore errors
       }
+      eventSourceRef.current = null;
     }
-    setIsConnected(false);
-    setIsConnecting(false);
-    setError(null);
-    setSession(null);
-    setProjects([]);
-    setProjectSessions([]);
-    setSelectedProject(null);
-    setSelectedSession(null);
-    clearSession(); // Clear session from session manager
-    setEvents(prev => [...prev, { id: generateMessageId(), type: 'connection', message: 'Disconnected from SSE server' }]);
   };
 
   const clearError = () => {
@@ -337,8 +334,6 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     }
 
     try {
-      console.log('📤 Sending message:', messageText);
-
       // Display sent message in UI immediately
       const sentMessageId = generateMessageId();
       setEvents(prev => [...prev, {
@@ -354,10 +349,10 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
       // Send message to server
       /** @type {import('./opencode-types.js').SessionMessageResponse} */
       const response = await sendMessageToSession(messageText);
-      console.log('✅ Message sent successfully:', response);
 
     } catch (error) {
       console.error('❌ Message send failed:', error);
+      console.error('isConnected:', isConnected, 'hasActiveSession:', hasActiveSession(), 'baseUrl:', baseUrl, 'selectedSession:', selectedSession);
       setError(`Failed to send message: ${error.message}`);
 
       // Remove the sent message from UI if send failed
@@ -393,6 +388,7 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     projectSessions,
     selectedProject,
     selectedSession,
+    isSessionBusy,
     connectToEvents,
     disconnectFromEvents,
     selectProject,
