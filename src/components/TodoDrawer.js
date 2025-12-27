@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, FlatList } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import StatusIcon from './StatusIcon';
 
 /**
  * TodoDrawer component - A collapsible top drawer showing todo tasks
  * @param {Object} props - Component props
  * @param {Array} props.todos - Array of todo items
  */
-const TodoDrawer = ({ todos = [] }) => {
-  const [expanded, setExpanded] = useState(false);
+const TodoDrawer = ({ todos = [], expanded, setExpanded }) => {
   const animation = useRef(new Animated.Value(0)).current;
 
   const toggleExpanded = () => {
@@ -38,21 +39,20 @@ const TodoDrawer = ({ todos = [] }) => {
         onPress={isFirstItem ? toggleExpanded : undefined}
       >
         <View style={styles.todoContent}>
-          <Text style={styles.todoIcon}>☐</Text>
+          <StatusIcon status={item.status} />
           <Text style={[styles.todoText, item.status === 'completed' && styles.completedText]}>
             {item.content}
           </Text>
           <View style={styles.todoMeta}>
-            <Text style={[styles.statusBadge, getStatusStyle(item.status)]}>
-              {item.status.replace('_', ' ')}
-            </Text>
-            <Text style={styles.priorityBadge}>
-              {item.priority}
-            </Text>
-            {isFirstItem && (
-              <Text style={styles.expandIcon}>
-                {expanded ? '▲' : '▼'}
+            {item.priority !== 'medium' && (
+              <Text style={[styles.priorityBadge, getPriorityStyle(item.priority)]}>
+                {item.priority}
               </Text>
+            )}
+            {isFirstItem && (
+              <Svg width="12" height="12" viewBox="0 0 24 24" style={styles.expandIcon}>
+                <Path d={expanded ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} fill="#666666" />
+              </Svg>
             )}
           </View>
         </View>
@@ -60,16 +60,18 @@ const TodoDrawer = ({ todos = [] }) => {
     );
   };
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'completed':
-        return styles.statusCompleted;
-      case 'in_progress':
-        return styles.statusInProgress;
-      case 'pending':
-        return styles.statusPending;
+
+
+  const getPriorityStyle = (priority) => {
+    switch (priority) {
+      case 'critical':
+        return styles.priorityCritical;
+      case 'high':
+        return styles.priorityHigh;
+      case 'low':
+        return styles.priorityLow;
       default:
-        return styles.statusPending;
+        return styles.priorityLow;
     }
   };
 
@@ -104,8 +106,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   expandIcon: {
-    fontSize: 14,
-    color: '#666666',
+    marginRight: 4,
   },
   todoList: {
     maxHeight: 240,
@@ -120,12 +121,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  todoIcon: {
-    fontSize: 14,
-    color: '#666666',
-    marginRight: 8,
-    fontWeight: 'bold',
-  },
+
   todoText: {
     fontSize: 14,
     color: '#333333',
@@ -140,33 +136,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  statusBadge: {
-    fontSize: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    textTransform: 'capitalize',
-  },
-  statusCompleted: {
-    backgroundColor: '#e8f5e8',
-    color: '#2e7d32',
-  },
-  statusInProgress: {
-    backgroundColor: '#fff3e0',
-    color: '#f57c00',
-  },
-  statusPending: {
-    backgroundColor: '#f3e5f5',
-    color: '#7b1fa2',
-  },
+
   priorityBadge: {
     fontSize: 12,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: '#e0e0e0',
-    color: '#666666',
     textTransform: 'capitalize',
+  },
+  priorityCritical: {
+    backgroundColor: '#d32f2f',
+    color: '#ffffff',
+  },
+  priorityHigh: {
+    backgroundColor: '#f57c00',
+    color: '#ffffff',
+  },
+  priorityLow: {
+    backgroundColor: '#9e9e9e',
+    color: '#ffffff',
   },
 });
 

@@ -6,7 +6,6 @@ import { classifyMessage, groupUnclassifiedMessages } from '../utils/messageClas
 import { sendMessageToSession, clearSession, hasActiveSession, setCurrentSession, deleteSession } from '../utils/sessionManager';
 import { fetchProjects, fetchSessionsForProject, fetchModels, saveLastSelectedModel, loadLastSelectedModel } from '../utils/projectManager';
 import { getRequestHeaders } from '../utils/requestUtils';
-import notificationService from '../utils/notificationService';
 import '../utils/opencode-types.js';
 
 // Import react-native-sse as default export (package uses module.exports)
@@ -17,6 +16,15 @@ import EventSource from 'react-native-sse';
  * @param {string} initialUrl - Initial SSE endpoint URL
  * @returns {Object} - SSE connection state and methods
  */
+// Global message ID counter (shared across hook instances)
+let messageCounter = 0;
+
+// Generate unique message IDs
+const generateMessageId = () => {
+  messageCounter += 1;
+  return `msg_${messageCounter}_${Date.now()}`;
+};
+
 // Helper function to update or add a message to the events array
 const updateOrAddMessage = (prevEvents, newMessage) => {
   // For now, just append the new message (assuming messages are unique or order matters)
@@ -24,8 +32,10 @@ const updateOrAddMessage = (prevEvents, newMessage) => {
 };
 
 // Helper function to process opencode messages with classification
-const processOpencodeMessage = (item, setUnclassifiedMessages, setTodos) => {
-  const classifiedMessage = classifyMessage(item);
+const processOpencodeMessage = (item, setUnclassifiedMessages, setTodos, currentMode) => {
+  const classifiedMessage = classifyMessage(item, currentMode);
+
+
 
   // Track unclassified messages separately
   if (classifiedMessage.category === 'unclassified') {
@@ -37,7 +47,8 @@ const processOpencodeMessage = (item, setUnclassifiedMessages, setTodos) => {
     setTodos(classifiedMessage.todos);
   }
 
-  return classifiedMessage;
+  // Ensure unique ID for UI rendering
+  return { ...classifiedMessage, id: classifiedMessage.id || generateMessageId() };
 };
 
 export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
@@ -63,6 +74,15 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   const [providers, setProviders] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [currentMode, setCurrentMode] = useState('build');
+  const [todoDrawerExpanded, setTodoDrawerExpanded] = useState(false);
+  const [baseUrl, setBaseUrl] = useState(null);
+  const [appState, setAppState] = useState(AppState.currentState);
+  const eventSourceRef = useRef(null);
+  const selectedSessionRef = useRef(null); // Ref to track selectedSession for SSE callbacks
+  const projectSessionsRef = useRef(null); // Ref to track projectSessions for notification session lookup
+  const connectionTimeoutRef = useRef(null); // Ref for connection timeout
+  const inactiveIntervalRef = useRef(null); // Ref for inactive notification interval
 
   // Load last successful URL on mount
   useEffect(() => {
@@ -78,28 +98,57 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     };
     loadLastUrl();
   }, []);
-  const [baseUrl, setBaseUrl] = useState(null);
-  const [appState, setAppState] = useState(AppState.currentState);
-   const eventSourceRef = useRef(null);
-   const messageCounterRef = useRef(0); // Unique message ID counter
-   const selectedSessionRef = useRef(null); // Ref to track selectedSession for SSE callbacks
-   const projectSessionsRef = useRef(null); // Ref to track projectSessions for notification session lookup
 
-  // Generate unique message IDs
-  const generateMessageId = () => {
-    messageCounterRef.current += 1;
-    return `msg_${messageCounterRef.current}_${Date.now()}`;
+  // Load todos for session context
+  const loadTodos = async (sessionId) => {
+    try {
+      console.log('📋 Loading todos for session:', sessionId, 'baseUrl:', baseUrl);
+      // Auto-collapse todo drawer when reloading todos
+      setTodoDrawerExpanded(false);
+      if (!baseUrl) {
+        console.error('❌ No baseUrl available for loading todos');
+        setTodos([]);
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/session/${sessionId}/todo`, {
+        headers: getRequestHeaders({}, selectedProject)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
+      }
+
+      const data = await response.json();
+      console.log('📋 Todos loaded:', data.length, 'todos');
+
+      if (data && Array.isArray(data)) {
+        setTodos(data);
+      } else {
+        setTodos([]);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load todos:', error);
+      setTodos([]);
+    }
   };
 
   // Load messages for session context
   const loadLastMessage = async (sessionId) => {
-    try {
-      console.log('📚 Loading messages for session:', sessionId, 'baseUrl:', baseUrl);
-      if (!baseUrl) {
-        console.error('❌ No baseUrl available for loading messages');
-        setEvents([]);
-        return;
-      }
+      try {
+        console.log('📚 Loading messages for session:', sessionId, 'baseUrl:', baseUrl, 'selectedProject:', selectedProject);
+        // Auto-collapse todo drawer when reloading messages
+        setTodoDrawerExpanded(false);
+       if (!baseUrl) {
+         console.error('❌ No baseUrl available for loading messages');
+         setEvents([]);
+         return;
+       }
 
       // Fetch up to 50 messages
       const response = await fetch(`${baseUrl}/session/${sessionId}/message?offset=0&limit=50`, {
@@ -115,17 +164,24 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
         throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
       }
 
-      const data = await response.json();
-      console.debug('DEBUG Messages loaded:', data.length, 'messages');
+       const data = await response.json();
+       console.log('📚 Messages loaded:', data.length, 'messages');
 
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Filter messages that contain text content
-        const textMessages = data.filter(message => {
-          if (!message.info || !Array.isArray(message.parts)) return false;
-          return message.parts.some(part => part && part.type === 'text' && part.text && part.text.trim());
-        });
+       if (data && Array.isArray(data) && data.length > 0) {
+         // Filter messages that contain text content
+         const textMessages = data.filter(message => {
+           if (!message.info || !Array.isArray(message.parts)) {
+             console.log('📚 Skipping message without info or parts:', message);
+             return false;
+           }
+           const hasText = message.parts.some(part => part && part.type === 'text' && part.text && part.text.trim());
+           if (!hasText) console.log('📚 Skipping message without text parts:', message);
+           return hasText;
+         });
 
-        if (textMessages.length > 0) {
+         console.log('📚 Text messages found:', textMessages.length);
+
+         if (textMessages.length > 0) {
           // Transform and classify each message
           const transformedEvents = textMessages.map(message => {
             // Transform API response to SSE-like format
@@ -141,8 +197,8 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
               }
             };
 
-            // Process the transformed message
-            const classifiedMessage = processOpencodeMessage(transformedMessage, setUnclassifiedMessages, setTodos);
+            // Process the transformed message (use message's own mode, not current)
+             const classifiedMessage = processOpencodeMessage(transformedMessage, setUnclassifiedMessages, setTodos, null);
             console.log('📚 Classified message:', { category: classifiedMessage.category, type: classifiedMessage.type, messageId: classifiedMessage.messageId, role: message.info?.role });
 
             return {
@@ -158,12 +214,13 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
             };
           });
 
-          // Set as initial events (replace any existing), maintaining API order
-          setEvents(transformedEvents);
-        } else {
-          console.log('📚 No text messages found');
-          setEvents([]);
-        }
+           console.log('📚 Setting events:', transformedEvents.length);
+           // Set as initial events (replace any existing), maintaining API order
+           setEvents(transformedEvents);
+         } else {
+           console.log('📚 No text messages found');
+           setEvents([]);
+         }
       } else {
         console.log('📚 No messages received');
         setEvents([]);
@@ -236,11 +293,29 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     });
     console.log('EventSource readyState after creation:', eventSourceRef.current.readyState);
 
+    // Set timeout for connection (10 minutes for long-use app)
+    if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+    connectionTimeoutRef.current = setTimeout(() => {
+      console.log('SSE connection timeout - restarting');
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      setIsConnected(false);
+      setError('Connection timeout');
+      // Restart after a short delay
+      setTimeout(() => setupSSEConnection(), 1000);
+    }, 600000);
+
     eventSourceRef.current.addEventListener("open", (event) => {
       console.log("🚀 SSE connection opened successfully!");
       console.log('EventSource readyState:', eventSourceRef.current.readyState);
       setIsConnected(true);
       setError(null); // Clear any previous errors
+      // Clear connection timeout
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
     });
 
     eventSourceRef.current.addEventListener("message", (event) => {
@@ -248,20 +323,18 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
       try {
         const data = JSON.parse(rawMessage);
         if (Array.isArray(data)) {
-          console.log(`📦 Processing array of ${data.length} messages`);
           data.forEach((item, index) => {
-            console.log(`🔄 Processing message ${index + 1}/${data.length}`);
-            const classifiedMessage = processOpencodeMessage(item, setUnclassifiedMessages, setTodos);
-            setEvents(prev => updateOrAddMessage(prev, classifiedMessage));
-          });
-        } else {
-          const classifiedMessage = processOpencodeMessage(data, setUnclassifiedMessages, setTodos);
-          setEvents(prev => updateOrAddMessage(prev, classifiedMessage));
-        }
-      } catch (parseError) {
-        // Ignore parse errors
-      }
-    });
+             const classifiedMessage = processOpencodeMessage(item, setUnclassifiedMessages, setTodos, null);
+             setEvents(prev => updateOrAddMessage(prev, classifiedMessage));
+           });
+         } else {
+           const classifiedMessage = processOpencodeMessage(data, setUnclassifiedMessages, setTodos, null);
+           setEvents(prev => updateOrAddMessage(prev, classifiedMessage));
+         }
+       } catch (parseError) {
+         // Ignore parse errors
+       }
+     });
 
     eventSourceRef.current.addEventListener("error", (event) => {
       console.log('SSE Error event:', event);
@@ -271,6 +344,11 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
       setIsConnected(false);
       const errorMsg = event.message || event.error || 'Connection failed';
       console.log(`Real-time connection error: ${errorMsg}`);
+      // Clear connection timeout
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
     });
   };
 
@@ -279,7 +357,7 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
 
     // Test connectivity to the initial server URL
     const testUrl = inputUrl.replace('/global/event', '');
-    console.log('🌐 Initial connectivity test for:', testUrl);
+    console.log('Web: Initial connectivity test for:', testUrl);
     fetch(testUrl, {
       method: 'HEAD',
       headers: getRequestHeaders({}, selectedProject)
@@ -321,12 +399,28 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
         console.log('Reconnecting SSE on foreground');
         setupSSEConnection();
       }
+      // Handle inactive state for notifications
+      if (nextAppState === 'inactive') {
+        inactiveIntervalRef.current = setInterval(() => {
+          fetch('https://api.day.app/jUnKwDUFPAosahKxjv36cX/Time Sensitive Notifications?level=timeSensitive')
+            .then(response => console.log('Notification sent:', response.status))
+            .catch(error => console.error('Notification failed:', error));
+        }, 30000);
+      } else if (nextAppState === 'active' && inactiveIntervalRef.current) {
+        clearInterval(inactiveIntervalRef.current);
+        inactiveIntervalRef.current = null;
+      }
     });
 
     // Set current session getter for notification filtering
-    notificationService.setCurrentSessionGetter(() => selectedSession);
 
-    return () => subscription?.remove();
+
+    return () => {
+      subscription?.remove();
+      if (inactiveIntervalRef.current) {
+        clearInterval(inactiveIntervalRef.current);
+      }
+    };
   }, [selectedSession]);
 
   // Auto-connect when server becomes reachable
@@ -343,7 +437,6 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
 
   // SSE heartbeat and auto-restart
   useEffect(() => {
-    console.warn('WARNING: SSE heartbeat interval set to 5 seconds - this is high frequency for testing only');
     const heartbeatInterval = setInterval(() => {
       const timestamp = new Date().toISOString();
       if (eventSourceRef.current && eventSourceRef.current.readyState !== EventSource.OPEN) {
@@ -353,7 +446,7 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
       } else {
         console.log(`${timestamp} SSE heartbeat OK`);
       }
-    }, 5000); // Check every 5 seconds
+    }, 30000); // Check every 30 seconds
 
     return () => clearInterval(heartbeatInterval);
   }, []);
@@ -446,15 +539,30 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     }
   };
 
-   const selectSession = (session) => {
-     console.log('🎯 Session selected:', session.id, 'baseUrl:', baseUrl);
-     setSelectedSession(session);
-     setCurrentSession(session, baseUrl);
-     // Load last message for context
-     loadLastMessage(session.id);
-     // Setup SSE connection now that session is active
-     setupSSEConnection();
-   };
+    const selectSession = (session) => {
+      console.log('Target: Session selected:', session.id, 'baseUrl:', baseUrl);
+      // Auto-collapse todo drawer when switching sessions
+      setTodoDrawerExpanded(false);
+      setSelectedSession(session);
+      setCurrentSession(session, baseUrl);
+      // Clear previous todos
+      setTodos([]);
+      // Load last message for context
+      loadLastMessage(session.id);
+      // Load todos for context
+      loadTodos(session.id);
+      // Setup SSE connection now that session is active
+      setupSSEConnection();
+    };
+
+    const refreshSession = () => {
+      if (selectedSession) {
+        console.log('🔄 Refreshing session:', selectedSession.id);
+        selectSession(selectedSession);
+      } else {
+        console.warn('Warning: No session selected to refresh');
+      }
+    };
 
    const createSession = async () => {
      try {
@@ -498,7 +606,7 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
         setEvents([]);
       }
 
-      console.log('🗑️ Session deleted from UI:', sessionId);
+      console.log('Trash: Session deleted from UI:', sessionId);
     } catch (error) {
       console.error('❌ Failed to delete session:', error);
       throw error;
@@ -511,6 +619,7 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     setIsServerReachable(null);
     setEvents([]);
     setUnclassifiedMessages([]);
+    setTodos([]);
     setSelectedProject(null);
     setSelectedSession(null);
     setIsSessionBusy(false);
@@ -532,16 +641,19 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   };
 
   const sendMessage = async (messageText, mode = 'build') => {
-    if (!isConnected || !hasActiveSession()) {
-      console.error('❌ Cannot send message: not connected or no session');
-      setError('Cannot send message: not connected to server or no session selected');
-      return;
-    }
+     if (!isConnected || !hasActiveSession()) {
+       console.error('❌ Cannot send message: not connected or no session');
+       setError('Cannot send message: not connected to server or no session selected');
+       return;
+     }
 
-    if (!messageText || !messageText.trim()) {
-      console.warn('⚠️ Cannot send empty message');
-      return;
-    }
+     if (!messageText || !messageText.trim()) {
+       console.warn('Warning: Cannot send empty message');
+       return;
+     }
+
+     // Update current mode
+     setCurrentMode(mode);
 
     // Display sent message in UI immediately
     const sentMessageId = generateMessageId();
@@ -551,18 +663,27 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
       category: 'sent',
       message: messageText,
       projectName: 'Me',
-      icon: '👤',
+        icon: 'User',
       timestamp: new Date().toISOString(),
       mode: mode
     }]);
 
     try {
+      // Set session busy before sending
+      setIsSessionBusy(true);
+
       // Send message to server
       /** @type {import('./opencode-types.js').SessionMessageResponse} */
       const response = await sendMessageToSession(messageText, mode, selectedProject, selectedModel);
 
       // Auto-dismiss keyboard after successful send
       Keyboard.dismiss();
+
+      // Auto-collapse todo drawer after sending message
+      setTodoDrawerExpanded(false);
+
+      // Set session not busy after response
+      setIsSessionBusy(false);
 
     } catch (error) {
       console.error('❌ Message send failed:', error);
@@ -571,6 +692,9 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
 
       // Remove the sent message from UI if send failed
       setEvents(prev => prev.filter(event => event.type !== 'sent' || event.message !== messageText));
+
+      // Set session not busy on error
+      setIsSessionBusy(false);
     }
   };
 
@@ -603,16 +727,20 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
      selectedProject,
       selectedSession,
       isSessionBusy,
-      todos,
-      providers,
-      selectedModel,
-      modelsLoading,
-      loadModels,
-      onModelSelect: handleModelSelect,
+       todos,
+        providers,
+        selectedModel,
+        modelsLoading,
+        currentMode,
+        todoDrawerExpanded,
+        setTodoDrawerExpanded,
+       loadModels,
+       onModelSelect: handleModelSelect,
       connectToEvents,
      disconnectFromEvents,
      selectProject,
-     selectSession,
+      selectSession,
+      refreshSession,
       createSession,
       deleteSession: deleteSessionWithConfirmation,
       clearError,

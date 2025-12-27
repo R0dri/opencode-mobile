@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { getSessionSummaryText, formatSessionDate } from '../utils/projectManager';
 
 /**
@@ -65,41 +66,36 @@ const SessionList = ({ sessions, visible, onSessionSelect, onClose, deleteSessio
                   onPress={() => handleSessionSelect(session)}
                   activeOpacity={0.7}
                 >
-                <View style={styles.sessionHeader}>
-                  <Text style={styles.sessionTitle} numberOfLines={2}>
-                    🎯 {session.title}
-                  </Text>
-                  <Text style={styles.sessionTime}>
-                    {formatSessionDate(session.time.updated)}
-                  </Text>
-                </View>
+                 <View style={styles.sessionHeader}>
+                   <Text style={styles.sessionTitle} numberOfLines={2}>
+                     {session.title}
+                   </Text>
+                 </View>
 
-                <View style={styles.sessionMeta}>
-                  <Text style={styles.sessionId}>
-                    ID: {session.id.slice(0, 12)}...
-                  </Text>
-                  {session.summary && (
-                    <Text style={styles.sessionSummary}>
-                      {getSessionSummaryText(session)}
+                  <View style={styles.sessionMeta}>
+                    <Text style={styles.sessionTime}>
+                      {formatSessionDate(session.time.updated)}
                     </Text>
-                  )}
-                </View>
-
-                {session.parentID && (
-                  <View style={styles.parentIndicator}>
-                    <Text style={styles.parentText}>↳ Child session</Text>
+                    {session.summary && (
+                      <Text style={styles.sessionSummary}>
+                        {getSessionSummaryText(session)}
+                      </Text>
+                    )}
                   </View>
-                )}
 
-                <View style={styles.versionBadge}>
-                  <Text style={styles.versionText}>{session.version}</Text>
-                </View>
+                 {session.parentID && (
+                   <View style={styles.parentIndicator}>
+                     <Text style={styles.parentText}>↳ Child session</Text>
+                   </View>
+                 )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => handleDeleteSession(session)}
                 >
-                  <Text style={styles.deleteIcon}>🗑️</Text>
+                  <Svg width="16" height="16" viewBox="0 0 24 24" style={styles.deleteIcon}>
+                    <Path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="#f44336" />
+                  </Svg>
                 </TouchableOpacity>
               </View>
             ))}
@@ -182,8 +178,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   deleteIcon: {
-    fontSize: 16,
-    color: '#f44336',
+    // SVG styles handled inline
   },
   sessionHeader: {
     flexDirection: 'row',
@@ -191,17 +186,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
   },
+
   sessionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#333',
-    flex: 1,
-    lineHeight: 22,
   },
   sessionTime: {
     fontSize: 12,
     color: '#999',
-    marginLeft: 8,
   },
   sessionMeta: {
     flexDirection: 'row',
@@ -209,11 +202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  sessionId: {
-    fontSize: 12,
-    color: '#999',
-    fontFamily: 'monospace',
-  },
+
   sessionSummary: {
     fontSize: 12,
     color: '#28a745',
@@ -232,20 +221,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
   },
-  versionBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: '#007bff',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  versionText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
+
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,

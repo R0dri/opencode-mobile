@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import DebugScreen from './DebugScreen';
+
 
 /**
  * EventList component for displaying SSE events
@@ -12,7 +12,7 @@ import DebugScreen from './DebugScreen';
  * @param {Function} props.onClearError - Function to clear error
  */
 const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError }) => {
-  const [debugVisible, setDebugVisible] = useState(false);
+
   const scrollViewRef = useRef(null);
   const lastScrollTime = useRef(0);
 
@@ -147,40 +147,32 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
         containerStyle = styles.leftAlignedContainer;
     }
 
+    // Dynamic markdown styles based on message type
+    const dynamicMarkdownStyles = {
+      ...markdownStyles,
+      body: {
+        ...markdownStyles.body,
+        color: '#333333',
+      },
+    };
+
     return (
       <View key={item.id} style={[styles.eventContainer, containerStyle]}>
         <View style={[styles.eventItem, itemStyle]} pointerEvents="box-none">
-          {item.type === 'sent' ? (
-            <View style={[styles.markdownContainer, messageStyle]} pointerEvents="box-none">
-              <Markdown
-                style={markdownStyles}
-                maxWidth="100%"
-                rules={{
-                  // Limit complex rules for performance
-                  html_inline: () => null,
-                  html_block: () => null,
-                  image: () => null,
-                }}
-              >
-                {item.message || ''}
-              </Markdown>
-            </View>
-          ) : (
-            <View style={[styles.markdownContainer, messageStyle]} pointerEvents="box-none">
-              <Markdown
-                style={markdownStyles}
-                maxWidth="100%"
-                rules={{
-                  // Limit complex rules for performance
-                  html_inline: () => null,
-                  html_block: () => null,
-                  image: () => null,
-                }}
-              >
-                {item.message || ''}
-              </Markdown>
-            </View>
-          )}
+          <View style={[styles.markdownContainer, messageStyle]} pointerEvents="box-none">
+            <Markdown
+              style={dynamicMarkdownStyles}
+              maxWidth="100%"
+              rules={{
+                // Limit complex rules for performance
+                html_inline: () => null,
+                html_block: () => null,
+                image: () => null,
+              }}
+            >
+              {item.message || ''}
+            </Markdown>
+          </View>
         </View>
       </View>
     );
@@ -197,16 +189,7 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
         </TouchableOpacity>
       )}
 
-      {hasUnclassifiedMessages && (
-        <TouchableOpacity
-          style={styles.debugButton}
-          onPress={() => setDebugVisible(true)}
-        >
-          <Text style={styles.debugButtonText}>
-            ⚠️ Debug ({Object.values(groupedUnclassifiedMessages).flat().length} unclassified)
-          </Text>
-        </TouchableOpacity>
-      )}
+
 
       <ScrollView
         ref={scrollViewRef}
@@ -218,11 +201,7 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
         {events.map((item) => renderEventItem({ item }))}
       </ScrollView>
 
-      <DebugScreen
-        unclassifiedMessages={groupedUnclassifiedMessages}
-        visible={debugVisible}
-        onClose={() => setDebugVisible(false)}
-      />
+
     </View>
   );
 };
@@ -261,18 +240,19 @@ const styles = StyleSheet.create({
      paddingHorizontal: 20,
      paddingBottom: 20,
    },
-   eventItem: {
-     padding: 12,
-     marginBottom: 12,
-     borderRadius: 0,
-     borderLeftWidth: 4,
-     borderRightWidth: 0,
-     shadowColor: '#000',
-     shadowOffset: { width: 0, height: 2 },
-     shadowOpacity: 0.1,
-     shadowRadius: 4,
-     elevation: 2,
-   },
+    eventItem: {
+      padding: 12,
+      marginBottom: 12,
+      borderRadius: 0,
+      borderLeftWidth: 4,
+      borderRightWidth: 0,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+      maxWidth: '97%',
+    },
   messageItem: {
     backgroundColor: '#ffffff',
     borderLeftColor: '#007bff',

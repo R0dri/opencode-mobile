@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { getProjectDisplayName } from '../utils/projectManager';
 import ModelSelector from './ModelSelector';
+import SessionStatusIndicator from './SessionStatusIndicator';
 
 /**
  * InfoBar component displaying server URL, project, session info, and model selector
@@ -18,63 +20,82 @@ import ModelSelector from './ModelSelector';
  * @param {Function} props.onModelSelect - Callback for model selection
  * @param {boolean} props.modelsLoading - Whether models are loading
  * @param {Function} props.onFetchModels - Callback to fetch models
+ * @param {Object} props.groupedUnclassifiedMessages - Grouped unclassified messages for debug
+ * @param {Function} props.onDebugPress - Callback to open debug screen
+ * @param {boolean} props.isSessionBusy - Whether the session is busy
  */
-const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selectedProject, selectedSession, serverUrl, providers, selectedModel, onModelSelect, modelsLoading, onFetchModels }) => {
+const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selectedProject, selectedSession, serverUrl, providers, selectedModel, onModelSelect, modelsLoading, onFetchModels, groupedUnclassifiedMessages, onDebugPress, isSessionBusy }) => {
   if (!isConnected) {
     return null; // Only show when connected
   }
 
+  const hasUnclassifiedMessages = Object.keys(groupedUnclassifiedMessages || {}).length > 0;
+
   return (
     <View style={styles.infoBar}>
       <View style={styles.contentContainer}>
-        <View style={styles.infoContainer}>
-          {serverUrl && (
+         <View style={styles.infoContainer}>
+           {serverUrl && (
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>🌐 Server</Text>
+              <View style={styles.infoLabel}>
+                <Svg width="12" height="12" viewBox="0 0 24 24">
+                  <Path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#666666" />
+                </Svg>
+                <Text style={styles.infoLabelText}>Server</Text>
+              </View>
               <Text style={styles.infoValue}>{serverUrl.replace('http://', '').replace('https://', '')}</Text>
             </View>
           )}
           {selectedProject && (
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>📁 Project</Text>
+              <View style={styles.infoLabel}>
+                <Svg width="12" height="12" viewBox="0 0 24 24">
+                  <Path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="#666666" />
+                </Svg>
+                <Text style={styles.infoLabelText}>Project</Text>
+              </View>
               <Text style={styles.infoValue}>{getProjectDisplayName(selectedProject.worktree)}</Text>
             </View>
-          )}
-          {selectedSession && (
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>🎯 Session</Text>
-              <Text style={styles.infoValue}>{selectedSession.title}</Text>
+           )}
+            <View style={styles.modelSelectorContainer}>
+             <ModelSelector
+               providers={providers}
+               selectedModel={selectedModel}
+               onModelSelect={onModelSelect}
+               loading={modelsLoading}
+               onFetchModels={onFetchModels}
+             />
             </View>
-          )}
-          <View style={styles.modelSelectorContainer}>
-            <ModelSelector
-              providers={providers}
-              selectedModel={selectedModel}
-              onModelSelect={onModelSelect}
-              loading={modelsLoading}
-              onFetchModels={onFetchModels}
-            />
           </View>
-        </View>
 
         <View style={styles.controlButtons}>
-          <TouchableOpacity
-            style={[styles.controlButton, styles.reconnectButton]}
-            onPress={onReconnect}
-            disabled={isConnecting}
-          >
-            <Text style={styles.controlButtonText}>🔄</Text>
-          </TouchableOpacity>
+           <TouchableOpacity
+             style={[styles.controlButton, styles.reconnectButton]}
+             onPress={onReconnect}
+             disabled={isConnecting}
+           >
+             <Text style={styles.controlButtonText}>🔄</Text>
+           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.controlButton, styles.disconnectButton]}
-            onPress={onDisconnect}
-          >
-            <Text style={styles.controlButtonText}>❌</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+           <TouchableOpacity
+             style={[styles.controlButton, styles.disconnectButton]}
+             onPress={onDisconnect}
+           >
+             <Text style={styles.controlButtonText}>❌</Text>
+           </TouchableOpacity>
+
+           {hasUnclassifiedMessages && (
+             <TouchableOpacity
+               style={[styles.controlButton, styles.debugButton]}
+               onPress={onDebugPress}
+             >
+               <Text style={styles.controlButtonText}>⚠️</Text>
+             </TouchableOpacity>
+           )}
+          </View>
+       </View>
+       <SessionStatusIndicator sessionStatus={isSessionBusy ? 'busy' : 'idle'} />
+     </View>
   );
 };
 
@@ -83,8 +104,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    paddingVertical: 12,
+    paddingVertical: 20,
     paddingHorizontal: 16,
+    minHeight: 100,
   },
   contentContainer: {
     flexDirection: 'row',
@@ -94,10 +116,10 @@ const styles = StyleSheet.create({
   infoContainer: {
     flexDirection: 'column',
     flex: 1,
-    gap: 8,
+    gap: 10,
   },
   modelSelectorContainer: {
-    marginTop: 8,
+    marginTop: 10,
   },
   infoItem: {
     flexDirection: 'row',
@@ -105,8 +127,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   infoLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  infoLabelText: {
     fontSize: 12,
-    color: '#666666',
+    color: '#666',
     fontWeight: '500',
   },
   infoValue: {
@@ -134,6 +161,9 @@ const styles = StyleSheet.create({
   },
   disconnectButton: {
     backgroundColor: '#a0a0a0',
+  },
+  debugButton: {
+    backgroundColor: '#ffc107',
   },
   controlButtonText: {
     fontSize: 14,

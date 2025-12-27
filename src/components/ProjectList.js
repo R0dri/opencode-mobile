@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { getProjectDisplayName } from '../utils/projectManager';
 
 /**
@@ -37,9 +38,14 @@ const ProjectList = ({ projects, visible, onProjectSelect, onClose }) => {
                 activeOpacity={0.7}
               >
                 <View style={styles.projectHeader}>
-                  <Text style={styles.projectName} numberOfLines={1}>
-                    📁 {getProjectDisplayName(project.worktree)}
-                  </Text>
+                  <View style={styles.projectNameContainer}>
+                    <Svg width="16" height="16" viewBox="0 0 24 24">
+                      <Path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="#666666" />
+                    </Svg>
+                    <Text style={styles.projectName} numberOfLines={1}>
+                      {getProjectDisplayName(project.worktree)}
+                    </Text>
+                  </View>
                   {project.vcs && (
                     <View style={styles.vcsBadge}>
                       <Text style={styles.vcsText}>{project.vcs.toUpperCase()}</Text>
@@ -128,11 +134,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  projectNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
   projectName: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    flex: 1,
+    textAlign: 'center',
   },
   vcsBadge: {
     backgroundColor: '#007bff',

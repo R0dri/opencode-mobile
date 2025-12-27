@@ -125,18 +125,20 @@ export const sendMessageToSession = async (messageText, mode = 'build', selected
   const messageUrl = `${baseUrl}/session/${currentSession.id}/message`;
 
   /** @type {import('./opencode-types.js').SessionMessageRequest} */
-  const messageBody = {
-    agent: mode,
-    parts: [{ type: 'text', text: messageText }]
-  };
+   const messageBody = {
+     agent: mode,
+     parts: [{ type: 'text', text: messageText }]
+   };
 
-  // Add model information if selected
-  if (selectedModel) {
-    messageBody.model = {
-      providerID: selectedModel.providerId,
-      modelID: selectedModel.modelId
-    };
-  }
+   // Add model information if selected
+   if (selectedModel) {
+     messageBody.model = {
+       providerID: selectedModel.providerId,
+       modelID: selectedModel.modelId
+     };
+   }
+
+   console.log('📤 Sending message, raw messageBody:', JSON.stringify(messageBody, null, 2));
 
 
 

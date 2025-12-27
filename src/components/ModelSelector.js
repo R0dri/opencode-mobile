@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, Dimensions } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 /**
  * ModelSelector component for choosing AI models
@@ -41,7 +42,7 @@ const ModelSelector = ({ providers = [], selectedModel, onModelSelect, loading =
       : Object.values(provider.models);
 
     const model = modelsArray.find(m => m.id === selectedModel.modelId);
-    return model ? model.name : 'Select Model';
+    return model ? (model.name || 'Unknown Model') : 'Select Model';
   };
 
   // Create flat list of all models with provider info
@@ -97,9 +98,9 @@ const ModelSelector = ({ providers = [], selectedModel, onModelSelect, loading =
         <Text style={styles.selectorText} numberOfLines={1}>
           {getSelectedModelDisplay()}
         </Text>
-        <Text style={styles.dropdownArrow}>
-          {dropdownVisible ? '▲' : '▼'}
-        </Text>
+        <Svg width="12" height="12" viewBox="0 0 24 24" style={styles.dropdownArrow}>
+          <Path d={dropdownVisible ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} fill="#666666" />
+        </Svg>
       </TouchableOpacity>
 
       <Modal
@@ -147,6 +148,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     minWidth: 150,
     maxWidth: 250,
+    minHeight: 36,
   },
   selectorText: {
     fontSize: 14,
@@ -155,9 +157,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dropdownArrow: {
-    fontSize: 12,
-    color: '#666666',
-    marginLeft: 8,
+    marginLeft: 4,
   },
   loadingText: {
     fontSize: 14,

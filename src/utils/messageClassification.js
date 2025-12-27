@@ -3,9 +3,10 @@ import { getProjectDisplayName } from './projectManager.js';
 /**
  * Message classification utility for opencode SSE messages
  * @param {import('./opencode-types.js').GlobalEvent} item - The SSE message item to classify
+ * @param {string} currentMode - Current mode ('build' or 'plan')
  * @returns {Object} - Classified message with metadata
  */
-export const classifyMessage = (item) => {
+export const classifyMessage = (item, currentMode = 'build') => {
   const payloadType = item.payload?.type || 'unknown';
   const summaryBody = item.payload?.properties?.info?.summary?.body;
 
@@ -33,7 +34,7 @@ export const classifyMessage = (item) => {
         sessionId: sessionId,
         payloadType: payloadType,
         sessionStatus: statusType,
-        mode: item.info?.mode || 'build'
+        mode: (currentMode !== null ? currentMode : item.info?.mode) || 'build'
       };
     }
   }
@@ -60,11 +61,11 @@ export const classifyMessage = (item) => {
         projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
         displayMessage: textContent,
         rawData: item,
-        icon: role === 'user' ? '👤' : '✅',
+        icon: role === 'user' ? 'User' : 'Check',
         sessionId: sessionId,
         payloadType: payloadType,
         messageId: item.payload?.properties?.info?.id || null,
-        mode: item.info?.mode || 'build'
+        mode: (currentMode !== null ? currentMode : item.info?.mode) || 'build'
       };
     } catch (error) {
       console.error('❌ Error processing loaded message:', error);
@@ -77,27 +78,32 @@ export const classifyMessage = (item) => {
         icon: '❌',
         sessionId: sessionId,
         payloadType: payloadType,
-        mode: item.info?.mode || 'build'
+        mode: (currentMode !== null ? currentMode : item.info?.mode) || 'build'
       };
     }
   }
 
-  // ONLY message.updated with summary.body gets displayed in chat
-  if (payloadType === 'message.updated' && summaryBody) {
-    // ✅ ONLY THIS CASE gets displayed in chat
-    console.log('✅ FINALIZED MESSAGE - will show in chat:', summaryBody.substring(0, 50) + '...');
-    return {
-      type: 'message_finalized',
-      category: 'message',
-      projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
-      displayMessage: summaryBody, // Use the body content directly
-      rawData: item,
-      icon: '✅',
-      sessionId: sessionId,
-      payloadType: payloadType,
-      messageId: item.payload?.properties?.info?.id || null,
-      mode: item.info?.mode || 'build'
-    };
+  // message.updated events are treated as finalized messages
+  if (payloadType === 'message.updated') {
+    console.log('Message.updated received, summaryBody:', !!summaryBody, summaryBody ? summaryBody.substring(0, 50) : 'none');
+    // Only finalize if summaryBody exists
+    if (summaryBody) {
+      console.log('Finalizing message with summaryBody');
+      return {
+        type: 'message_finalized',
+        category: 'message',
+        projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
+        message: summaryBody, // Use the body content directly
+        rawData: item,
+        icon: '✅',
+        sessionId: sessionId,
+        payloadType: payloadType,
+        messageId: item.payload?.properties?.info?.id || null,
+        mode: item.payload?.properties?.info?.agent || 'build'
+      };
+    }
+    console.log('Not finalizing, no summaryBody');
+    // Fall through to unclassified if no summaryBody
   }
 
   // Handle todo updated messages
@@ -125,7 +131,7 @@ export const classifyMessage = (item) => {
     projectName: item.projectName || getProjectDisplayName(item.directory) || 'Unknown Project',
     displayMessage: JSON.stringify(item, null, 2),
     rawData: item,
-    icon: '⚠️',
+    icon: 'Warning',
     sessionId: sessionId,
     payloadType: payloadType,
     mode: item.info?.mode || 'build'
@@ -146,12 +152,12 @@ const formatClassifiedMessage = (item, projectName, classification, icon) => {
   const { info } = properties || {};
 
   if (!info) {
-    return `${icon} ${classification.toUpperCase()}\n📁 ${projectName}\n📝 ${type}\n⚠️ Missing info data`;
+    return `${icon} ${classification.toUpperCase()}\nProject: ${projectName}\nType: ${type}\nWarning: Missing info data`;
   }
 
   const { role, agent, id } = info;
 
-  return `${icon} ${classification.toUpperCase()}\n📁 ${projectName}\n📝 ${type}\n👤 ${role} (${agent})\n💬 ${id}`;
+  return `${icon} ${classification.toUpperCase()}\nProject: ${projectName}\nType: ${type}\nRole: ${role} (${agent})\nID: ${id}`;
 };
 
 /**

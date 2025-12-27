@@ -1,19 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
-import { useSSE } from '../hooks/useSSE';
-import StatusBar from '../components/StatusBar';
-import InfoBar from '../components/InfoBar';
-import TodoDrawer from '../components/TodoDrawer';
-import MessageFilter from '../components/MessageFilter';
-import SessionStatusToggle from '../components/SessionStatusToggle';
-import URLInput from '../components/URLInput';
-import ProjectList from '../components/ProjectList';
-import SessionList from '../components/SessionList';
-import LogViewer from '../components/LogViewer';
+import { StyleSheet, View, Text, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function EventScreen() {
+export default function EventScreen(props) {
   const [showLogs, setShowLogs] = useState(false);
   const [showInfoBar, setShowInfoBar] = useState(false);
+  const [debugVisible, setDebugVisible] = useState(false);
+  const [sessionModalVisible, setSessionModalVisible] = useState(true);
 
   const {
     events,
@@ -40,42 +33,50 @@ export default function EventScreen() {
     disconnectFromEvents,
     selectProject,
     selectSession,
+    refreshSession,
     createSession,
     clearError,
     sendMessage,
-  } = useSSE();
+    todoDrawerExpanded,
+    setTodoDrawerExpanded,
+  } = props;
   
 
 
 
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior="padding"
-          keyboardVerticalOffset={0}
-        >
-          <View style={{ flex: 1 }}>
-            <StatusBar
-              isConnected={isConnected}
-              isConnecting={isConnecting}
-              isServerReachable={isServerReachable}
-              showInfoBar={showInfoBar}
-              onToggleInfoBar={() => setShowInfoBar(!showInfoBar)}
-              projectSessions={projectSessions}
-              selectedSession={selectedSession}
-              onSessionSelect={selectSession}
-              onCreateSession={createSession}
-              deleteSession={deleteSession}
-              baseUrl={inputUrl.replace('/global/event', '')}
-              isSessionBusy={isSessionBusy}
-            />
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior="padding"
+        keyboardVerticalOffset={0}
+      >
+        <View style={{ flex: 1 }}>
+          <StatusBar
+            isConnected={isConnected}
+            isConnecting={isConnecting}
+            isServerReachable={isServerReachable}
+            showInfoBar={showInfoBar}
+            onToggleInfoBar={() => setShowInfoBar(!showInfoBar)}
+            selectedProject={selectedProject}
+            selectedSession={selectedSession}
+            onProjectPress={() => { selectProject(null); selectSession(null); }}
+            onSessionPress={() => { selectSession(null); }}
+            projectSessions={projectSessions}
+            onSessionSelect={selectSession}
+            onRefreshSession={refreshSession}
+            onCreateSession={createSession}
+            deleteSession={deleteSession}
+            baseUrl={inputUrl.replace('/global/event', '')}
+            isSessionBusy={isSessionBusy}
+            groupedUnclassifiedMessages={groupedUnclassifiedMessages}
+            onDebugPress={() => setDebugVisible(true)}
+          />
 
-            <TodoDrawer todos={todos} />
+          {/* <TodoDrawer todos={todos} expanded={todoDrawerExpanded} setExpanded={setTodoDrawerExpanded} /> */}
 
-            {showInfoBar && (
+          {showInfoBar && (
             <InfoBar
               isConnected={isConnected}
               isConnecting={isConnecting}
@@ -89,50 +90,60 @@ export default function EventScreen() {
               onModelSelect={onModelSelect}
               modelsLoading={modelsLoading}
               onFetchModels={loadModels}
-            />
-            )}
-
-            <MessageFilter
-              events={events}
-              selectedSession={selectedSession}
               groupedUnclassifiedMessages={groupedUnclassifiedMessages}
-              onClearError={clearError}
-              allUnclassifiedMessages={groupedUnclassifiedMessages}
+              onDebugPress={() => setDebugVisible(true)}
+              isSessionBusy={isSessionBusy}
             />
+          )}
 
-            <ProjectList
-              projects={projects}
-              visible={projects.length > 0 && !selectedProject}
-              onProjectSelect={selectProject}
-              onClose={() => {}}
-            />
+          <MessageFilter
+            events={events}
+            selectedSession={selectedSession}
+            groupedUnclassifiedMessages={groupedUnclassifiedMessages}
+            onClearError={clearError}
+            allUnclassifiedMessages={groupedUnclassifiedMessages}
+          />
 
-            <SessionList
-              sessions={projectSessions}
-              visible={isConnected && selectedProject && projectSessions.length > 0 && !selectedSession}
-              onSessionSelect={selectSession}
-              onClose={() => {}}
-              deleteSession={deleteSession}
-            />
+          <ProjectList
+            projects={projects}
+            visible={projects.length > 0 && !selectedProject}
+            onProjectSelect={selectProject}
+            onClose={() => {}}
+          />
 
-            <URLInput
-              inputUrl={inputUrl}
-              onUrlChange={setInputUrl}
-              onConnect={connectToEvents}
-              onSendMessage={(text, mode) => sendMessage(text, mode)}
-              isConnecting={isConnecting}
-              isConnected={isConnected}
-              isServerReachable={isServerReachable}
-            />
-          </View>
-        </KeyboardAvoidingView>
+          <SessionList
+            sessions={projectSessions}
+            visible={isConnected && selectedProject && projectSessions.length > 0 && !selectedSession && sessionModalVisible}
+            onSessionSelect={selectSession}
+            onClose={() => setSessionModalVisible(false)}
+            deleteSession={deleteSession}
+          />
 
-        <LogViewer
-          visible={showLogs}
-          onClose={() => setShowLogs(false)}
-        />
-      </SafeAreaView>
-    </View>
+          <URLInput
+            inputUrl={inputUrl}
+            onUrlChange={setInputUrl}
+            onConnect={connectToEvents}
+            onSendMessage={(text, mode) => sendMessage(text, mode)}
+            isConnecting={isConnecting}
+            isConnected={isConnected}
+            isServerReachable={isServerReachable}
+          />
+        </View>
+      </KeyboardAvoidingView>
+
+      <LogViewer
+        visible={showLogs}
+        onClose={() => setShowLogs(false)}
+      />
+
+      <DebugScreen
+        unclassifiedMessages={groupedUnclassifiedMessages}
+        visible={debugVisible}
+        onClose={() => setDebugVisible(false)}
+      />
+
+      <SessionIndicator isThinking={isSessionBusy} />
+    </SafeAreaView>
   );
 }
 

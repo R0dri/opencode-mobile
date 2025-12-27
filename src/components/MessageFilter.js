@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import EventList from './EventList';
 
 /**
@@ -19,7 +19,7 @@ const MessageFilter = ({
 
 
   // Filter events by session ID
-  const filteredEvents = React.useMemo(() => {
+  const filteredEvents = useMemo(() => {
     const filtered = [];
 
     events.forEach(event => {
@@ -56,7 +56,7 @@ const MessageFilter = ({
   }, [events, selectedSession]);
 
   // Filter unclassified messages (exclude session status that were handled)
-  const filteredUnclassified = React.useMemo(() => {
+  const filteredUnclassified = useMemo(() => {
     const filtered = {};
 
     Object.entries(groupedUnclassifiedMessages).forEach(([type, messages]) => {

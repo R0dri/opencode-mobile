@@ -3,11 +3,13 @@ import { View, Text, StyleSheet } from 'react-native';
 
 /**
  * SessionStatusIndicator component
- * Shows the current session status (busy/idle) above the connection status
+ * Shows the current session status (busy/idle) in the status bar
  * @param {string} sessionStatus - Current session status ('busy', 'idle', or null)
  */
 const SessionStatusIndicator = ({ sessionStatus }) => {
+  console.log('SessionStatusIndicator render with status:', sessionStatus);
   if (!sessionStatus) {
+    console.log('SessionStatusIndicator returning null');
     return null;
   }
 
@@ -15,49 +17,63 @@ const SessionStatusIndicator = ({ sessionStatus }) => {
     switch (sessionStatus) {
       case 'busy':
         return {
-          text: 'Session is busy',
-          emoji: '🤖',
+          text: 'Busy',
+          icon: 'B',
           color: '#FFC107',
           backgroundColor: 'rgba(255, 193, 7, 0.1)'
         };
       case 'idle':
         return {
-          text: 'Session is idle',
-          emoji: '😌',
+          text: 'Idle',
+          icon: 'I',
           color: '#4CAF50',
           backgroundColor: 'rgba(76, 175, 80, 0.1)'
         };
       default:
         return {
-          text: `Session: ${sessionStatus}`,
-          emoji: '❓',
+          text: 'Status',
+          icon: '?',
           color: '#9E9E9E',
           backgroundColor: 'rgba(158, 158, 158, 0.1)'
         };
     }
   };
 
-  const { text, emoji, color, backgroundColor } = getStatusInfo();
+  const { text, icon, color, backgroundColor } = getStatusInfo();
+
+  console.log('SessionStatusIndicator rendering with:', { text, icon, color });
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Text style={[styles.text, { color }]}>
-        {emoji} {text}
-      </Text>
+      <View style={styles.content}>
+        <Text style={[styles.icon, { color }]}>
+          {icon}
+        </Text>
+        <Text style={[styles.text, { color }]}>
+          {text}
+        </Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginBottom: 8,
-    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    alignSelf: 'center',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  icon: {
+    fontSize: 10,
   },
   text: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
   },
 });

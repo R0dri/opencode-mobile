@@ -1,32 +1,47 @@
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import { useEffect } from 'react';
-import * as Notifications from 'expo-notifications';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+
 import EventScreen from './src/screens/EventScreen';
-import notificationService from './src/utils/notificationService';
+import CustomDrawerContent from './src/components/CustomDrawerContent';
+import { useSSE } from './src/hooks/useSSE';
+
+const Drawer = createDrawerNavigator();
 
 export default function App() {
+  const sseData = useSSE();
+
   useEffect(() => {
     console.log('\n\n🚀 ===== APP STARTED =====\n\n');
-    // Initialize notifications on app startup
-    notificationService.initialize();
-
-    // Handle notification taps
-    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-      const { sessionId, messageId } = response.notification.request.content.data;
-      console.log('Notification tapped for session:', sessionId, 'message:', messageId);
-      // TODO: Navigate to specific session and highlight the message
-      // This will be implemented when navigation system is added
-    });
-
-    return () => subscription.remove();
   }, []);
 
   return (
-    <View style={styles.container}>
-      <EventScreen />
+    <GestureHandlerRootView style={styles.container}>
+      <NavigationContainer>
+        <Drawer.Navigator
+          drawerContent={(props) => (
+            <CustomDrawerContent
+              {...props}
+              sessions={sseData.projectSessions}
+              selectedSession={sseData.selectedSession}
+              onSessionSelect={sseData.selectSession}
+              deleteSession={sseData.deleteSession}
+            />
+          )}
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Drawer.Screen name="EventScreen">
+            {(props) => <EventScreen {...props} {...sseData} />}
+          </Drawer.Screen>
+        </Drawer.Navigator>
+      </NavigationContainer>
       <StatusBar style="dark" backgroundColor="#ffffff" />
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

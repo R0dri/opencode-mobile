@@ -19,13 +19,7 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-    "notification": {
-      "icon": "./assets/icon.png",
-      "color": "#007bff",
-      "iosDisplayInForeground": true,
-      "androidMode": "default",
-      "androidCollapsedTitle": "New messages"
-    },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -47,6 +41,10 @@
     },
     "updates": {
       "url": "https://u.expo.dev/2acd63e2-d8ab-4f1d-8270-f4fd80a3667b"
-    }
+    },
+    "platforms": ["ios", "android"],
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

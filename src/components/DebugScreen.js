@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 
 /**
@@ -56,9 +57,9 @@ const DebugScreen = ({ unclassifiedMessages, visible, onClose }) => {
           <Text style={styles.groupTitle}>
             {type} ({messageCount})
           </Text>
-          <Text style={styles.expandIcon}>
-            {isExpanded ? '▼' : '▶'}
-          </Text>
+          <Svg width="12" height="12" viewBox="0 0 24 24" style={styles.expandIcon}>
+            <Path d={isExpanded ? "M7 10l5 5 5-5z" : "M10 7l5 5-5 5z"} fill="#666666" />
+          </Svg>
         </TouchableOpacity>
 
         {isExpanded && (
@@ -69,9 +70,14 @@ const DebugScreen = ({ unclassifiedMessages, visible, onClose }) => {
                   {new Date().toLocaleTimeString()}
                 </Text>
                  <View style={styles.messageHeader}>
-                   <Text style={styles.messageProject}>
-                     📁 {message.projectName}
-                   </Text>
+                    <View style={styles.messageProject}>
+                      <Svg width="12" height="12" viewBox="0 0 24 24">
+                        <Path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="#666666" />
+                      </Svg>
+                      <Text style={styles.messageProjectText}>
+                        {message.projectName}
+                      </Text>
+                    </View>
                    <TouchableOpacity 
                      style={styles.copyButton}
                      onPress={() => copyToClipboard(
@@ -109,9 +115,14 @@ const DebugScreen = ({ unclassifiedMessages, visible, onClose }) => {
         <View style={styles.container}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Text style={styles.title}>
-                Debug Screen ⚠️
-              </Text>
+              <View style={styles.title}>
+                <Svg width="16" height="16" viewBox="0 0 24 24">
+                  <Path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="#856404" />
+                </Svg>
+                <Text style={styles.titleText}>
+                  Debug Screen
+                </Text>
+              </View>
               <Text style={styles.subtitle}>
                 {messageTypes.length} payload types • {totalMessages} total messages
               </Text>
@@ -177,7 +188,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  titleText: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -252,8 +268,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   expandIcon: {
-    fontSize: 14,
-    color: '#333',
+    marginLeft: 8,
   },
   groupContent: {
     padding: 12,
@@ -278,10 +293,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   messageProject: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  messageProjectText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
   },
   copyButton: {
     paddingHorizontal: 8,

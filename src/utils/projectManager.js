@@ -39,7 +39,8 @@ export const fetchProjects = async (baseUrl, selectedProject = null) => {
     return projects;
   } catch (error) {
     console.error('❌ Project fetch failed:', error);
-    throw error;
+    // Return empty array instead of throwing to prevent app crashes
+    return [];
   }
 };
 
@@ -51,7 +52,7 @@ export const fetchProjects = async (baseUrl, selectedProject = null) => {
  */
 export const fetchModels = async (baseUrl, selectedProject = null) => {
   try {
-    const response = await fetch(`${baseUrl}/global/providers`, {
+    const response = await fetch(`${baseUrl}/config/providers`, {
       method: 'GET',
       headers: getRequestHeaders({
         'Accept': 'application/json'
@@ -65,28 +66,21 @@ export const fetchModels = async (baseUrl, selectedProject = null) => {
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       // If not JSON, return empty to avoid errors
-      console.warn('⚠️ Model fetch returned non-JSON, using empty providers');
+      console.warn('Warning: Model fetch returned non-JSON, using empty providers');
       return {
         providers: [],
         defaults: {}
       };
     }
 
-    /** @type {{providers: Array, default: Object} | Array} */
+    /** @type {{providers: Array, default: Object}} */
     const data = await response.json();
 
-    // Handle both object {providers: [...], default: {...}} and array [...] formats
-    if (Array.isArray(data)) {
-      return {
-        providers: data,
-        defaults: {}
-      };
-    } else {
-      return {
-        providers: data.providers || [],
-        defaults: data.default || {}
-      };
-    }
+    // Handle the /config/providers response format: { providers: [...], default: {...} }
+    return {
+      providers: data.providers || [],
+      defaults: data.default || {}
+    };
   } catch (error) {
     console.error('❌ Model fetch failed:', error);
     // Return empty providers instead of throwing to prevent app crashes

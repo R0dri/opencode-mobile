@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform, TouchableOpacity, Modal, FlatList, Dimensions, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Svg, { Path } from 'react-native-svg';
 import SessionStatusToggle from './SessionStatusToggle';
+import BreadcrumbSlider from './BreadcrumbSlider';
 
 /**
  * StatusBar component showing app title and connection status
@@ -8,6 +11,10 @@ import SessionStatusToggle from './SessionStatusToggle';
  * @param {boolean} props.isConnected - Whether SSE is connected
  * @param {boolean} props.isConnecting - Whether SSE is connecting
  * @param {boolean|null} props.isServerReachable - Whether server is reachable (null = not tested)
+ * @param {import('../utils/opencode-types.js').Project|null} props.selectedProject - Currently selected project
+ * @param {import('../utils/opencode-types.js').Session|null} props.selectedSession - Currently selected session
+ * @param {Function} props.onProjectPress - Function called when project breadcrumb is pressed
+ * @param {Function} props.onSessionPress - Function called when session breadcrumb is pressed
  */
 const StatusBar = ({
   isConnected,
@@ -15,20 +22,40 @@ const StatusBar = ({
   isServerReachable,
   showInfoBar,
   onToggleInfoBar,
-  projectSessions,
+  selectedProject,
   selectedSession,
+  onProjectPress,
+  onSessionPress,
+  projectSessions,
   onSessionSelect,
+  onRefreshSession,
   onCreateSession,
   deleteSession,
-  isSessionBusy
+  baseUrl,
+  isSessionBusy,
+  groupedUnclassifiedMessages,
+  onDebugPress
 }) => {
+  const navigation = useNavigation();
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [showConnectedText, setShowConnectedText] = useState(true);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (isConnected && showConnectedText) {
+      const timer = setTimeout(() => {
+        setShowConnectedText(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else if (!isConnected) {
+      setShowConnectedText(true);
+    }
+  }, [isConnected, showConnectedText]);
 
   const truncateTitle = (title, maxLength = 20) => {
     if (!title) return 'SSE Chat';
     return title.length > maxLength ? title.slice(0, maxLength) + '...' : title;
   };
-  const [creating, setCreating] = useState(false);
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
@@ -106,13 +133,19 @@ const StatusBar = ({
               ID: {item.id.slice(0, 8)}... • {new Date(item.time.updated).toLocaleDateString()}
             </Text>
           </View>
-          {isActive && <Text style={styles.activeIndicator}>✓</Text>}
+          {isActive && (
+            <Svg width="16" height="16" viewBox="0 0 24 24" style={styles.activeIndicator}>
+              <Path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="#1976d2" />
+            </Svg>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleDeleteSession(item)}
         >
-          <Text style={styles.deleteIcon}>🗑️</Text>
+          <Svg width="16" height="16" viewBox="0 0 24 24" style={styles.deleteIcon}>
+            <Path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="#f44336" />
+          </Svg>
         </TouchableOpacity>
       </View>
     );
@@ -120,15 +153,8 @@ const StatusBar = ({
 
   return (
     <View style={styles.statusBar}>
-      <View style={styles.leftContainer}>
-        <TouchableOpacity style={styles.titleContainer} onPress={toggleDropdown}>
-          <Text style={styles.appTitle} numberOfLines={1}>{truncateTitle(selectedSession?.title)}</Text>
-          <Text style={styles.dropdownArrow}>{dropdownVisible ? '▼' : '▶'}</Text>
-        </TouchableOpacity>
-
-      </View>
-
-      <View style={styles.rightContainer}>
+      {/* Top Row: Status and Controls */}
+      <View style={styles.topRow}>
         <TouchableOpacity style={styles.statusContainer} onPress={onToggleInfoBar}>
           <View style={[styles.statusDot, {
             backgroundColor: isConnected ? '#4CAF50' :
@@ -136,22 +162,72 @@ const StatusBar = ({
                            isServerReachable === true ? '#FF9800' :  // Orange for server reachable but not connected
                            isServerReachable === false ? '#F44336' : '#9E9E9E' // Gray for not tested
           }]} />
-          <Text style={[styles.statusText, {
-            color: isConnected ? '#4CAF50' :
-                  isConnecting ? '#2196F3' :
-                  isServerReachable === true ? '#FF9800' :
-                  isServerReachable === false ? '#F44336' : '#9E9E9E'
-          }]}>
-            {isConnected ? 'Connected' :
-             isConnecting ? 'Connecting...' :
-             isServerReachable === true ? 'Server Ready' :
-             isServerReachable === false ? 'Server Unreachable' :
-             'Checking...'}
-          </Text>
-            {isConnecting && <ActivityIndicator size="small" color="#333333" style={styles.loadingIndicator} />}
+          {(showConnectedText || !isConnected) && (
+            <Text style={[styles.statusText, {
+              color: isConnected ? '#4CAF50' :
+                    isConnecting ? '#2196F3' :
+                    isServerReachable === true ? '#FF9800' :
+                    isServerReachable === false ? '#F44336' : '#9E9E9E'
+            }]}>
+              {isConnected ? 'Connected' :
+               isConnecting ? 'Connecting...' :
+               isServerReachable === true ? 'Server Ready' :
+               isServerReachable === false ? 'Server Unreachable' :
+               'Checking...'}
+            </Text>
+          )}
+
+          {isConnecting && <ActivityIndicator size="small" color="#333333" style={styles.loadingIndicator} />}
         </TouchableOpacity>
 
-        <SessionStatusToggle isBusy={isSessionBusy} />
+        <View style={styles.topControls}>
+          <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
+            <Svg width="16" height="16" viewBox="0 0 24 24">
+              <Path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="#666666" />
+            </Svg>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingsButton} onPress={onToggleInfoBar}>
+            <Svg width="16" height="16" viewBox="0 0 24 24">
+              <Path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="#666666" />
+            </Svg>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.debugButton} onPress={onDebugPress}>
+            <Svg width="16" height="16" viewBox="0 0 24 24">
+              <Path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5s-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z" fill="#666666" />
+            </Svg>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Middle Row: Breadcrumb */}
+      <View style={styles.middleRow}>
+        <BreadcrumbSlider
+          selectedProject={selectedProject}
+          selectedSession={selectedSession}
+          onProjectPress={onProjectPress}
+          onSessionPress={onSessionPress}
+        />
+      </View>
+
+      {/* Bottom Row: Session Title and Actions */}
+      <View style={styles.bottomRow}>
+        <TouchableOpacity style={styles.titleContainer} onPress={toggleDropdown}>
+          <Text style={styles.appTitle} numberOfLines={1}>{truncateTitle(selectedSession?.title)}</Text>
+          <Svg width="12" height="12" viewBox="0 0 24 24" style={styles.dropdownArrow}>
+            <Path d={dropdownVisible ? "M7 10l5 5 5-5z" : "M10 7l5 5-5 5z"} fill="#666666" />
+          </Svg>
+        </TouchableOpacity>
+
+        <View style={styles.rightContainer}>
+          <TouchableOpacity style={styles.refreshButton} onPress={onRefreshSession}>
+            <Svg width="16" height="16" viewBox="0 0 24 24">
+              <Path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="#666666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </Svg>
+          </TouchableOpacity>
+
+          <SessionStatusToggle isBusy={isSessionBusy} />
+        </View>
       </View>
 
       <Modal
@@ -183,14 +259,34 @@ const StatusBar = ({
 const styles = StyleSheet.create({
   statusBar: {
     backgroundColor: '#ffffff',
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
     paddingHorizontal: 16,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    marginBottom: 4,
+  },
+  topControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  middleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   leftContainer: {
     flexDirection: 'row',
@@ -233,14 +329,17 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     marginLeft: 8,
   },
+  menuButton: {
+    padding: 8,
+    marginRight: 8,
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   dropdownArrow: {
-    fontSize: 12,
-    color: '#666666',
+    marginLeft: 4,
   },
   dropdownOverlay: {
     flex: 1,
@@ -279,8 +378,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   deleteIcon: {
-    fontSize: 16,
-    color: '#f44336',
+    marginLeft: 8,
   },
   activeSessionItem: {
     backgroundColor: '#e3f2fd',
@@ -303,9 +401,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   activeIndicator: {
-    fontSize: 16,
-    color: '#1976d2',
-    fontWeight: 'bold',
+    marginRight: 8,
   },
   createItem: {
     backgroundColor: '#e8f5e8',
@@ -317,6 +413,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2e7d32',
   },
+  menuButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  debugButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  refreshButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
 
 });
 

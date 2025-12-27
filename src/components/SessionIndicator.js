@@ -7,12 +7,12 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
  */
 const SessionIndicator = ({ isThinking }) => {
   const animationRefs = useRef([]);
+  const animatedValues = useRef(Array(3).fill(0).map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     // Start animations when thinking begins
     if (isThinking) {
-      animationRefs.current = Array(3).fill(0).map((_, index) => {
-        const animatedValue = useRef(new Animated.Value(0)).current;
+      animationRefs.current = animatedValues.map((animatedValue, index) => {
         
         const loopAnimation = Animated.loop(
           Animated.sequence([
@@ -29,7 +29,7 @@ const SessionIndicator = ({ isThinking }) => {
             }),
           ])
         );
-        
+
         loopAnimation.start();
         return { animatedValue, loopAnimation };
       });
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: 80, // Position above input bar
-    right: 20,
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
