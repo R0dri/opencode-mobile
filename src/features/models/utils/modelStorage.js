@@ -1,6 +1,6 @@
 // Model preference storage utilities
-import { storage } from '@/services/storage/asyncStorage';
-import { STORAGE_KEYS } from '@/shared/constants/storage';
+import { storage } from '../../../services/storage/asyncStorage';
+import { STORAGE_KEYS } from '../../../shared/constants/storage';
 
 /**
  * Save the last selected model to storage

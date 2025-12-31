@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 /**
@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 8,
-    maxHeight: Dimensions.get('window').height * 0.6,
-    width: Dimensions.get('window').width * 0.8,
+    maxHeight: 400,
+    width: 300,
     maxWidth: 400,
   },
   modelList: {

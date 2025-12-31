@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { getProjectDisplayName } from '@/features';
+import { getProjectDisplayName } from '../features';
 
 /**
  * StatusInfoBar component displaying server URL, project, and session info
  * @param {Object} props - Component props
  * @param {boolean} props.isConnected - Whether SSE is connected
- * @param {import('../shared/types/opencode.types.js').Project|null} props.selectedProject - Currently selected project
+ * @param {import('../features/projects/types/project.types.js').Project|null} props.selectedProject - Currently selected project
  * @param {import('../shared/types/opencode.types.js').Session|null} props.selectedSession - Currently selected session
  * @param {string} props.serverUrl - Connected server URL
  */

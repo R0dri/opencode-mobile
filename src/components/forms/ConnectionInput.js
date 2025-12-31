@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import PaperPlaneIcon from '@/components/common/PaperPlaneIcon';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { useTheme } from '../../shared/components/ThemeProvider';
+import PaperPlaneIcon from '../common/PaperPlaneIcon';
 
 /**
  * URLInput component for entering URL, connecting, and sending messages
@@ -14,8 +15,25 @@ import PaperPlaneIcon from '@/components/common/PaperPlaneIcon';
  * @param {boolean|null} props.isServerReachable - Whether server is reachable
  */
 const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnecting, isConnected, isServerReachable }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
   const [messageText, setMessageText] = useState('');
   const [mode, setMode] = useState('build');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handler = (e) => {
+        if (e.shiftKey && e.key === 'Tab' && document.activeElement === inputRef.current) {
+          e.preventDefault();
+          setMode(prev => prev === 'build' ? 'plan' : 'build');
+        }
+      };
+      window.addEventListener('keydown', handler);
+      return () => window.removeEventListener('keydown', handler);
+    }
+  }, []);
+
   const handleSendMessage = () => {
     if (messageText.trim()) {
       onSendMessage(messageText.trim(), mode);
@@ -33,29 +51,29 @@ const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnectin
         // Show message input and send button when connected
         <>
           <TouchableOpacity
-            style={[styles.modeButton, { borderColor: mode === 'build' ? '#007bff' : '#6f42c1' }]}
+            style={[styles.modeButton, { borderColor: mode === 'build' ? theme.colors.accent : '#6f42c1' }]}
             onPress={() => setMode(mode === 'build' ? 'plan' : 'build')}
           >
             <Text style={styles.modeButtonText}>{mode.toUpperCase()}</Text>
           </TouchableOpacity>
-          <TextInput
-            style={styles.messageInput}
-            value={messageText}
-            onChangeText={setMessageText}
-            placeholder="Type your message..."
-            placeholderTextColor="#999999"
-            multiline
-            onSubmitEditing={handleSubmitEditing}
-            blurOnSubmit={false}
-            returnKeyType="send"
-          />
+            <TextInput
+              ref={inputRef}
+              style={styles.messageInput}
+              value={messageText}
+              onChangeText={setMessageText}
+              placeholder="Type your message..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline={false}
+              onSubmitEditing={handleSubmitEditing}
+              returnKeyType="send"
+            />
           <TouchableOpacity
             style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
             onPress={handleSendMessage}
             disabled={!messageText.trim()}
           >
             <PaperPlaneIcon
-              color={!messageText.trim() ? '#999' : '#007bff'}
+              color={!messageText.trim() ? theme.colors.textMuted : theme.colors.accent}
               size={20}
             />
           </TouchableOpacity>
@@ -64,21 +82,22 @@ const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnectin
         // Show URL input and connect button when not connected
         <>
           <TouchableOpacity
-            style={[styles.modeButton, { borderColor: mode === 'build' ? '#007bff' : '#6f42c1' }]}
+            style={[styles.modeButton, { borderColor: mode === 'build' ? theme.colors.accent : '#6f42c1' }]}
             onPress={() => setMode(mode === 'build' ? 'plan' : 'build')}
           >
             <Text style={styles.modeButtonText}>{mode.toUpperCase()}</Text>
           </TouchableOpacity>
-          <TextInput
-            style={styles.urlInput}
-            value={inputUrl}
-            onChangeText={onUrlChange}
-             placeholder="Enter base URL (https:// added automatically, e.g., 10.1.1.122:63425)"
-            placeholderTextColor="#999999"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-          />
+            <TextInput
+              style={styles.urlInput}
+              value={inputUrl}
+              onChangeText={onUrlChange}
+               placeholder="Enter base URL (https:// added automatically, e.g., 10.1.1.122:63425)"
+              placeholderTextColor={theme.colors.textMuted}
+             autoCapitalize="none"
+             autoCorrect={false}
+             keyboardType="url"
+             onSubmitEditing={onConnect}
+           />
           <TouchableOpacity
             style={[
               styles.connectButton,
@@ -103,7 +122,7 @@ const URLInput = ({ inputUrl, onUrlChange, onConnect, onSendMessage, isConnectin
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     paddingTop: 6,
@@ -116,7 +135,7 @@ const styles = StyleSheet.create({
   urlInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.colors.border,
     borderRadius: 20,
     padding: 12,
     fontSize: 14,
@@ -125,7 +144,7 @@ const styles = StyleSheet.create({
   messageInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.colors.border,
     borderRadius: 20,
     padding: 12,
     fontSize: 14,
@@ -138,23 +157,19 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#007bff',
+    borderColor: theme.colors.accent,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    borderColor: '#cccccc',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#cccccc',
-    borderRightColor: '#999',
+    borderColor: theme.colors.textMuted,
   },
 
   connectButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#28a745',
+    borderColor: theme.colors.success,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 20,
@@ -162,38 +177,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   connectButtonDisabled: {
-    borderColor: '#cccccc',
+    borderColor: theme.colors.textMuted,
   },
   connectButtonReachable: {
-    borderColor: '#4CAF50', // Green when server is reachable
+    borderColor: theme.colors.statusConnected, // Green when server is reachable
   },
   connectButtonUnreachable: {
-    borderColor: '#F44336', // Red when server is unreachable
+    borderColor: theme.colors.statusUnreachable, // Red when server is unreachable
   },
   connectButtonText: {
-    color: '#28a745',
+    color: theme.colors.success,
     fontWeight: 'bold',
     fontSize: 14,
   },
   connectButtonTextReachable: {
-    color: '#4CAF50',
+    color: theme.colors.statusConnected,
   },
   connectButtonTextUnreachable: {
-    color: '#F44336',
+    color: theme.colors.statusUnreachable,
   },
   modeButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
     backgroundColor: 'transparent',
   },
   modeButtonText: {
-    color: '#333',
+    color: theme.colors.textPrimary,
     fontWeight: 'bold',
     fontSize: 12,
   },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import logger from '@/services/storage/logger';
+import logger from '../services/storage/logger';
 
 const LogViewer = ({ visible, onClose }) => {
   const [logs, setLogs] = useState('');

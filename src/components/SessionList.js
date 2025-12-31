@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { getSessionSummaryText, formatSessionDate } from '@/features';
+import { getSessionSummaryText, formatSessionDate } from '../features';
 
 /**
  * SessionList component for displaying project sessions as a clickable list

@@ -1,5 +1,5 @@
 // SSE orchestrator - combines all feature modules
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   useSSEConnection,
   useConnectionManager,
@@ -10,44 +10,188 @@ import {
   useModelManager,
   useTodoManager,
   useNotificationManager
-} from '@/features';
-import { sendMessageToSession, clearSession, hasActiveSession, setCurrentSession, deleteSession } from '@/features';
+} from '../features';
+import { sendMessageToSession, clearSession, hasActiveSession, setCurrentSession, deleteSession } from '../features';
+import { storage } from '../services/storage/asyncStorage';
+import { useSessionStatus } from './useSessionStatus';
 
 export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   // Core state
   const [inputUrl, setInputUrl] = useState(initialUrl);
   const [baseUrl, setBaseUrl] = useState(null);
   const [currentMode, setCurrentMode] = useState('build');
+  const [autoConnectAttempted, setAutoConnectAttempted] = useState(false);
+  const [shouldShowProjectSelector, setShouldShowProjectSelector] = useState(false);
 
-  // Feature modules
-  const connection = useSSEConnection(baseUrl);
-  const connectionMgr = useConnectionManager();
-  const appState = useAppState(null); // Will be updated with selected session
+   // Feature modules
+   const projects = useProjectManager(baseUrl);
 
-  const messaging = useMessageProcessing();
-  const projects = useProjectManager(baseUrl);
-  const models = useModelManager(baseUrl, projects.selectedProject);
-  const todos = useTodoManager(baseUrl, projects.selectedSession?.id);
-  const notifications = useNotificationManager();
+   // Heartbeat callback that only runs when a project is selected
+   const heartbeatCallback = useCallback(() => {
+     if (projects.selectedProject) {
+       projects.refreshProjectSessions();
+     }
+   }, [projects]);
 
-  // Event manager for SSE messages
-  const eventManager = useEventManager(
-    (message) => messaging.processMessage(message, currentMode),
-    projects.selectedSession
-  );
+   const connection = useSSEConnection(baseUrl, heartbeatCallback);
+   const connectionMgr = useConnectionManager();
+   const appState = useAppState(null); // Will be updated with selected session
 
-  // Connect to server
-  const connectToEvents = useCallback(async () => {
+   const messaging = useMessageProcessing();
+   const models = useModelManager(baseUrl, projects.selectedProject);
+    const todos = useTodoManager(baseUrl, projects.selectedSession?.id, projects.selectedProject);
+   const notifications = useNotificationManager();
+   const sessionStatus = useSessionStatus(projects.selectedSession);
+
+  // Debug: Log projects changes
+  useEffect(() => {
+    console.log('useSSE projects updated:', projects.projects?.length || 0, 'projects');
+    console.log('useSSE projects object:', projects);
+  }, [projects.projects]);
+
+  // Show embedded project selector when projects are loaded but no project is selected
+  useEffect(() => {
+    if (projects.projects && projects.projects.length > 0 && !projects.selectedProject && connection.isConnected) {
+      console.log('useSSE: Projects loaded but no project selected - showing embedded selector');
+      setShouldShowProjectSelector(true);
+    }
+  }, [projects.projects, projects.selectedProject, connection.isConnected]);
+
+  // Unified connect function
+  const connect = useCallback(async (url, options = {}) => {
+    const { autoSelect = false, forceReconnect = false } = options;
+
     try {
-      const cleanUrl = await connectionMgr.validateAndConnect(inputUrl);
+      // Disconnect if forcing reconnect
+      if (forceReconnect && connection.isConnected) {
+        disconnectFromEvents();
+      }
+
+      // Validate and connect
+      const cleanUrl = await connectionMgr.validateAndConnect(url);
       setBaseUrl(cleanUrl);
-      await connection.connect();
-      await projects.loadProjects();
+      setInputUrl(url);
+
+      // Auto-select saved project/session if requested
+      if (autoSelect) {
+        try {
+          const savedProject = await storage.get('lastSelectedProject');
+          const savedSession = await storage.get('lastSelectedSession');
+
+          if (savedProject) {
+            console.log('📁 Auto-selecting saved project:', savedProject.name);
+            await projects.selectProject(savedProject);
+
+            if (savedSession) {
+              console.log('💬 Auto-selecting saved session:', savedSession.title);
+              await projects.selectSession(savedSession);
+            }
+          } else {
+            console.log('ℹ️ No saved project to auto-select - will show project selector');
+            setShouldShowProjectSelector(true);
+          }
+        } catch (error) {
+          console.error('❌ Error during auto-selection:', error);
+        }
+      }
+
+      // Save successful connection URL
+      await storage.set('lastConnectedUrl', url);
+
     } catch (error) {
       console.error('Connection failed:', error);
       throw error;
     }
-  }, [inputUrl, connectionMgr, connection, projects]);
+  }, [connectionMgr, projects]);
+
+  // Load saved URL on mount
+  useEffect(() => {
+    const loadSavedUrl = async () => {
+      const savedUrl = await storage.get('lastConnectedUrl');
+      if (savedUrl) {
+        setInputUrl(savedUrl);
+      }
+    };
+    loadSavedUrl();
+  }, []);
+
+  // Auto-connect on app start if we have a saved URL
+  useEffect(() => {
+    const autoConnect = async () => {
+      try {
+        const savedUrl = await storage.get('lastConnectedUrl');
+        console.log('Checking for saved connection:', savedUrl);
+
+        if (savedUrl && inputUrl === savedUrl && !autoConnectAttempted) {
+          console.log('\n===== AUTO-CONNECT ATTEMPT =====');
+          console.log('Saved URL:', savedUrl);
+          console.log('Connected:', connection.isConnected);
+          console.log('Input URL:', inputUrl);
+          console.log('================================\n');
+
+          setAutoConnectAttempted(true);
+
+          try {
+            // Connect and load projects if not already connected
+            if (!connection.isConnected) {
+              console.log('Establishing connection...');
+              await connect(savedUrl, { autoSelect: false }); // Just connect, don't auto-select
+            } else {
+              console.log('Already connected, loading projects...');
+              // Just load projects and try auto-selection
+              await projects.loadProjects();
+
+              const savedProject = await storage.get('lastSelectedProject');
+              const savedSession = await storage.get('lastSelectedSession');
+
+            if (savedProject) {
+              console.log('Auto-selecting saved project:', savedProject.name);
+              await projects.selectProject(savedProject);
+              console.log('Project auto-selected, user can now choose session manually');
+            } else {
+              console.log('No saved project to auto-select - triggering project selector');
+              setShouldShowProjectSelector(true);
+            }
+            }
+
+            console.log('\n===== AUTO-CONNECT COMPLETED =====\n');
+          } catch (error) {
+            console.error('Auto-connect failed:', error);
+            setAutoConnectAttempted(false); // Allow retry
+          }
+        } else {
+          console.log('Skipping auto-connect:', {
+            hasSavedUrl: !!savedUrl,
+            urlMatches: inputUrl === savedUrl,
+            alreadyAttempted: autoConnectAttempted,
+            isConnected: connection.isConnected
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error during auto-connect check:', error);
+      }
+    };
+
+    // Small delay to ensure everything is initialized
+    const timeoutId = setTimeout(autoConnect, 500);
+    return () => clearTimeout(timeoutId);
+  }, [inputUrl, autoConnectAttempted, connection.isConnected, projects, connect]);
+
+  // Event manager for SSE messages
+  const eventManager = useEventManager(
+    (message) => {
+      // Handle session status messages
+      if (message.payload?.type === 'session.status') {
+        sessionStatus.handleSessionStatus(message);
+        return; // Don't process as regular message
+      }
+
+      // Handle regular messages
+      const processedMessage = messaging.processMessage(message, currentMode);
+      messaging.addEvent(processedMessage);
+    },
+    projects.selectedSession
+  );
 
   // Disconnect from server
   const disconnectFromEvents = useCallback(() => {
@@ -60,8 +204,14 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
 
   // Send message
   const sendMessage = useCallback(async (messageText, mode = 'build') => {
-    if (!connection.isConnected || !hasActiveSession()) {
-      throw new Error('Cannot send message: not connected or no session selected');
+    if (!projects.selectedSession) {
+      throw new Error('No session selected');
+    }
+
+    setCurrentSession(projects.selectedSession, baseUrl);
+
+    if (!connection.isConnected) {
+      throw new Error('Not connected');
     }
 
     if (!messageText || !messageText.trim()) {
@@ -80,7 +230,8 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
       projectName: 'Me',
       icon: 'User',
       timestamp: new Date().toISOString(),
-      mode: mode
+      mode: mode,
+      sessionId: projects.selectedSession?.id
     });
 
     try {
@@ -122,8 +273,18 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   }, [projects]);
 
   const selectSession = useCallback((session) => {
+    console.log('useSSE: selectSession called with', session?.title);
     projects.selectSession(session);
-  }, [projects]);
+    console.log('useSSE: after selectSession, selectedSession is', projects.selectedSession?.title);
+    // Clear previous messages and load new session messages
+    if (session && baseUrl) {
+      messaging.clearEvents();
+      messaging.loadMessages(baseUrl, session.id, projects.selectedProject);
+    } else {
+      // Clear events if no session selected
+      messaging.clearEvents();
+    }
+  }, [projects, messaging, baseUrl]);
 
   const createSession = useCallback(async () => {
     return await projects.createSession();
@@ -134,9 +295,13 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
   }, [projects]);
 
   const refreshSession = useCallback(() => {
-    // Placeholder - would reload current session data
-    console.log('Refresh session not implemented yet');
-  }, []);
+    if (projects.selectedSession && baseUrl) {
+      // Clear events before refreshing to avoid duplicates
+      messaging.clearEvents();
+      messaging.loadMessages(baseUrl, projects.selectedSession.id, projects.selectedProject);
+      todos.loadTodos();
+    }
+  }, [projects.selectedSession, baseUrl, messaging, todos, projects.selectedProject]);
 
   // Return unified interface (backward compatible)
   return {
@@ -144,6 +309,8 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     events: messaging.events,
     unclassifiedMessages: messaging.unclassifiedMessages,
     groupedUnclassifiedMessages: messaging.groupedUnclassifiedMessages,
+    allMessages: messaging.allMessages,
+    groupedAllMessages: messaging.groupedAllMessages,
     isConnected: connection.isConnected,
     isConnecting: connection.isConnecting,
     isServerReachable: connectionMgr.isServerReachable,
@@ -151,12 +318,14 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     inputUrl,
     setInputUrl,
 
-    // Projects & Sessions
-    projects: projects.projects,
-    projectSessions: projects.projectSessions,
-    selectedProject: projects.selectedProject,
-    selectedSession: projects.selectedSession,
-    isSessionBusy: false, // Placeholder
+      // Projects & Sessions
+      projects: projects.projects,
+      projectSessions: projects.projectSessions,
+      sessionStatuses: projects.sessionStatuses,
+      selectedProject: projects.selectedProject,
+      selectedSession: projects.selectedSession,
+      sessionLoading: projects.sessionLoading,
+     isSessionBusy: sessionStatus.isThinking,
 
     // Models
     providers: models.providers,
@@ -168,8 +337,11 @@ export const useSSE = (initialUrl = 'http://10.1.1.122:63425') => {
     todoDrawerExpanded: todos.expanded,
     setTodoDrawerExpanded: todos.setExpanded,
 
+    // UI State
+    shouldShowProjectSelector,
+
     // Actions
-    connectToEvents,
+    connect,
     disconnectFromEvents,
     sendMessage,
     clearError,

@@ -5,12 +5,13 @@ import Svg, { Path } from 'react-native-svg';
 /**
  * BreadcrumbSlider component for navigation path display
  * @param {Object} props - Component props
- * @param {import('../shared/types/opencode.types.js').Project|null} props.selectedProject - Currently selected project
+ * @param {import('../features/projects/types/project.types.js').Project|null} props.selectedProject - Currently selected project
  * @param {import('../shared/types/opencode.types.js').Session|null} props.selectedSession - Currently selected session
  * @param {Function} props.onProjectPress - Function called when project is pressed
  * @param {Function} props.onSessionPress - Function called when session is pressed
  */
 const BreadcrumbSlider = ({ selectedProject, selectedSession, onProjectPress, onSessionPress }) => {
+  // console.debug('DEBUG: BreadcrumbSlider rendering', { selectedProject: typeof selectedProject, selectedSession: typeof selectedSession, onProjectPress: typeof onProjectPress, onSessionPress: typeof onSessionPress });
   return (
     <View style={styles.breadcrumb}>
       {selectedProject && (
@@ -21,7 +22,7 @@ const BreadcrumbSlider = ({ selectedProject, selectedSession, onProjectPress, on
         </TouchableOpacity>
       )}
       {selectedProject && selectedSession && (
-        <Svg width="12" height="12" viewBox="0 0 24 24" style={styles.chevron}>
+          <Svg width="12" height="12" viewBox="0 0 24 24" style={styles.chevron}>
           <Path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="#666" />
         </Svg>
       )}

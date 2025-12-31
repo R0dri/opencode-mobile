@@ -1,11 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../../shared/components/ThemeProvider';
 
 /**
  * ProjectSelectionModal - Project browser and selector
  */
 const ProjectSelectionModal = ({ visible, onClose, projects, onProjectSelect, selectedProject }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+  const screenWidth = Dimensions.get('window').width;
+  const modalWidth = Math.min(screenWidth * 0.9, 600);
+
   const renderProjectItem = ({ item }) => (
     <TouchableOpacity
       style={[
@@ -30,34 +36,39 @@ const ProjectSelectionModal = ({ visible, onClose, projects, onProjectSelect, se
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Select Project</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeButton}>✕</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={[styles.content, { width: modalWidth }]}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Select Project</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
 
-        <FlatList
-          data={projects}
-          keyExtractor={(item) => item.id}
-          renderItem={renderProjectItem}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No projects available</Text>
-              <Text style={styles.emptySubtext}>Make sure the server is running and has projects configured</Text>
-            </View>
-          }
-        />
+          <FlatList
+            data={projects}
+            keyExtractor={(item) => item.id}
+            renderItem={renderProjectItem}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No projects available</Text>
+                <Text style={styles.emptySubtext}>Make sure the server is running and has projects configured</Text>
+              </View>
+            }
+          />
+        </View>
       </SafeAreaView>
     </Modal>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -65,15 +76,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: theme.colors.border,
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: theme.colors.textPrimary,
   },
   closeButton: {
     fontSize: 18,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   listContainer: {
     padding: 16,
@@ -84,13 +96,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.colors.border,
     marginBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   projectItemSelected: {
-    borderColor: '#007bff',
-    backgroundColor: '#f8f9ff',
+    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.surface,
   },
   projectInfo: {
     flex: 1,
@@ -98,15 +110,16 @@ const styles = StyleSheet.create({
   projectName: {
     fontSize: 16,
     fontWeight: '500',
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   projectPath: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   selectedIndicator: {
     fontSize: 18,
-    color: '#007bff',
+    color: theme.colors.accent,
     fontWeight: 'bold',
   },
   emptyContainer: {
@@ -116,12 +129,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
 });

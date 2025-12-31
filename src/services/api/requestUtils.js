@@ -16,8 +16,9 @@ export const getProjectPath = (selectedProject = null) => {
   if (selectedProject && selectedProject.directory) {
     return selectedProject.directory;
   }
-  // Fallback to current app directory if no project selected
-  return '/Users/rodri/Projects/opencode-mobile/opencode-mobile';
+  // No valid path found - log warning and return empty
+  console.warn('getProjectPath: No worktree or directory found for project', selectedProject?.id, '- server will return all sessions');
+  return '';
 };
 
 /**
@@ -27,11 +28,17 @@ export const getProjectPath = (selectedProject = null) => {
  * @returns {Object} - Headers object with x-opencode-directory
  */
 export const getRequestHeaders = (additionalHeaders = {}, selectedProject = null) => {
-  return {
-    'x-opencode-directory': getProjectPath(selectedProject),
+  const headers = {
     'Accept': 'application/json',
     ...additionalHeaders
   };
+  
+  const projectPath = getProjectPath(selectedProject);
+  if (projectPath) {
+    headers['x-opencode-directory'] = projectPath;
+  }
+  
+  return headers;
 };
 
 /**

@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { getProjectDisplayName } from '@/features';
+import { getProjectDisplayName } from '../features';
 
 /**
  * ProjectList component for displaying available projects as centered cards
  * @param {Object} props - Component props
- * @param {Array<import('../shared/types/opencode.types.js').Project>} props.projects - Array of projects to display
+ * @param {Array<import('../features/projects/types/project.types.js').Project>} props.projects - Array of projects to display
  * @param {boolean} props.visible - Whether the modal is visible
  * @param {Function} props.onProjectSelect - Function called when a project is selected
  * @param {Function} props.onClose - Function called when modal is closed

@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { getProjectDisplayName } from '@/features';
+import { useTheme } from '../../shared/components/ThemeProvider';
+import { getProjectDisplayName } from '../../features';
 import ModelSelector from '../ModelSelector';
 import SessionStatusIndicator from '../SessionStatusIndicator';
 
@@ -12,7 +13,7 @@ import SessionStatusIndicator from '../SessionStatusIndicator';
  * @param {boolean} props.isConnecting - Whether SSE is connecting
  * @param {Function} props.onReconnect - Function to handle reconnect
  * @param {Function} props.onDisconnect - Function to handle disconnect
- * @param {import('../shared/types/opencode.types.js').Project|null} props.selectedProject - Currently selected project
+ * @param {import('../features/projects/types/project.types.js').Project|null} props.selectedProject - Currently selected project
  * @param {import('../shared/types/opencode.types.js').Session|null} props.selectedSession - Currently selected session
  * @param {string} props.serverUrl - Connected server URL
  * @param {Array} props.providers - Available model providers
@@ -25,6 +26,9 @@ import SessionStatusIndicator from '../SessionStatusIndicator';
  * @param {boolean} props.isSessionBusy - Whether the session is busy
  */
 const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selectedProject, selectedSession, serverUrl, providers, selectedModel, onModelSelect, modelsLoading, onFetchModels, groupedUnclassifiedMessages, onDebugPress, isSessionBusy }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
   if (!isConnected) {
     return null; // Only show when connected
   }
@@ -55,9 +59,20 @@ const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selecte
                 <Text style={styles.infoLabelText}>Project</Text>
               </View>
               <Text style={styles.infoValue}>{getProjectDisplayName(selectedProject.worktree)}</Text>
-            </View>
-           )}
-            <View style={styles.modelSelectorContainer}>
+             </View>
+            )}
+            {selectedSession && (
+              <View style={styles.infoItem}>
+                <View style={styles.infoLabel}>
+                  <Svg width="12" height="12" viewBox="0 0 24 24">
+                    <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#666666" />
+                  </Svg>
+                  <Text style={styles.infoLabelText}>Session</Text>
+                </View>
+                <Text style={styles.infoValue}>{selectedSession.id}</Text>
+              </View>
+            )}
+             <View style={styles.modelSelectorContainer}>
              <ModelSelector
                providers={providers}
                selectedModel={selectedModel}
@@ -99,11 +114,11 @@ const InfoBar = ({ isConnected, isConnecting, onReconnect, onDisconnect, selecte
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   infoBar: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: theme.colors.border,
     paddingVertical: 20,
     paddingHorizontal: 16,
     minHeight: 100,
@@ -133,14 +148,14 @@ const styles = StyleSheet.create({
   },
   infoLabelText: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 12,
-    color: '#333333',
+    color: theme.colors.textPrimary,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.surface,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -157,16 +172,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reconnectButton: {
-    backgroundColor: '#808080',
+    backgroundColor: theme.colors.textMuted,
   },
   disconnectButton: {
-    backgroundColor: '#a0a0a0',
+    backgroundColor: theme.colors.surfaceSecondary,
   },
   debugButton: {
-    backgroundColor: '#ffc107',
+    backgroundColor: theme.colors.warning,
   },
   controlButtonText: {
     fontSize: 14,
+    color: theme.colors.background,
   },
 });
 

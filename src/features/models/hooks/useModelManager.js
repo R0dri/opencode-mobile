@@ -1,8 +1,8 @@
 // AI model management and selection
 import { useState, useCallback } from 'react';
-import { apiClient } from '@/services/api/client';
-import { storage } from '@/services/storage/asyncStorage';
-import { STORAGE_KEYS } from '@/shared/constants/storage';
+import { apiClient } from '../../../services/api/client';
+import { storage } from '../../../services/storage/asyncStorage';
+import { STORAGE_KEYS } from '../../../shared/constants/storage';
 
 export const useModelManager = (baseUrl, selectedProject) => {
   const [providers, setProviders] = useState([]);

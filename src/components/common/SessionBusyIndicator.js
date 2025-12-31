@@ -2,11 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 
 /**
- * Animated bouncing dots component that shows when session is busy
+ * Animated dots component that shows when session is busy
  * @param {boolean} isBusy - Whether the session is busy
  */
-const SessionStatusToggle = ({ isBusy }) => {
-
+const SessionBusyIndicator = ({ isBusy }) => {
   const animationRefs = useRef([]);
 
   useEffect(() => {
@@ -35,7 +34,7 @@ const SessionStatusToggle = ({ isBusy }) => {
         return { animatedValue, loopAnimation };
       });
     } else {
-      // Stop animations when not busy
+      // Stop animations when busy ends
       animationRefs.current.forEach(({ loopAnimation }) => {
         if (loopAnimation) {
           loopAnimation.stop();
@@ -64,11 +63,6 @@ const SessionStatusToggle = ({ isBusy }) => {
       outputRange: [0.3, 1],
     });
 
-    const translateY = animatedValue.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, -6],
-    });
-
     return (
       <Animated.View
         key={index}
@@ -76,7 +70,14 @@ const SessionStatusToggle = ({ isBusy }) => {
           styles.dot,
           {
             opacity,
-            transform: [{ translateY }],
+            transform: [
+              {
+                translateY: animatedValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -4],
+                }),
+              },
+            ],
           },
         ]}
       />
@@ -94,22 +95,21 @@ const SessionStatusToggle = ({ isBusy }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'transparent',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  dotContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dotContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   dot: {
-    width: 8, // Slightly larger dots
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFC107', // Yellow dots to match border
-    marginHorizontal: 3, // More spacing
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFC107', // Yellow dots
+    marginHorizontal: 2,
   },
 });
 
-export default SessionStatusToggle;
+export default SessionBusyIndicator;

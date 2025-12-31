@@ -3,11 +3,35 @@
  * Handles session creation, storage, and retrieval
  */
 
-import '@/shared/types/opencode.types.js';
-import { getRequestHeaders } from '@/services/api/requestUtils';
+
+/**
+ * Get common headers for all API requests
+ * @param {Object} additionalHeaders - Additional headers to include
+ * @param {Object} selectedProject - Currently selected project
+ * @returns {Object} - Headers object with x-opencode-directory
+ */
+const getRequestHeaders = (additionalHeaders = {}, selectedProject = null) => {
+  const getProjectPath = (selectedProject = null) => {
+    // Use selected project's directory/worktree path
+    if (selectedProject && selectedProject.worktree) {
+      return selectedProject.worktree;
+    }
+    if (selectedProject && selectedProject.directory) {
+      return selectedProject.directory;
+    }
+    // Fallback to current app directory if no project selected
+    return '/Users/rodri/Projects/opencode-mobile/opencode-mobile';
+  };
+
+  return {
+    'x-opencode-directory': getProjectPath(selectedProject),
+    'Accept': 'application/json',
+    ...additionalHeaders
+  };
+};
 
 // In-memory session storage (can be expanded to persistent storage later)
-/** @type {import('@/shared/types/opencode.types.js').Session|null} */
+/** @type {import('../../../../shared/types/opencode.types.js').Session|null} */
 let currentSession = null;
 /** @type {string|null} */
 let baseUrl = null;
@@ -16,7 +40,7 @@ let baseUrl = null;
  * Create a new chat session
  * @param {string} serverBaseUrl - Base URL of the opencode server
  * @param {Object} selectedProject - Currently selected project
- * @returns {Promise<import('@/shared/types/opencode.types.js').Session>} - Session object
+ * @returns {Promise<import('../../../../shared/types/opencode.types.js').Session>} - Session object
  */
 export const createSession = async (serverBaseUrl, selectedProject = null) => {
   try {
@@ -39,7 +63,7 @@ export const createSession = async (serverBaseUrl, selectedProject = null) => {
       throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
     }
 
-    /** @type {import('@/shared/types/opencode.types.js').Session} */
+    /** @type {import('../../../../shared/types/opencode.types.js').Session} */
     const session = await response.json();
 
 
@@ -60,7 +84,7 @@ export const createSession = async (serverBaseUrl, selectedProject = null) => {
 
 /**
  * Get the current active session
- * @returns {import('@/shared/types/opencode.types.js').Session|null} - Current session or null if no session
+ * @returns {import('../../../../shared/types/opencode.types.js').Session|null} - Current session or null if no session
  */
 export const getCurrentSession = () => {
   return currentSession;
@@ -84,7 +108,7 @@ export const hasActiveSession = () => {
 
 /**
  * Set an existing session as the current session
- * @param {import('@/shared/types/opencode.types.js').Session} session - Session to set as current
+ * @param {import('../../../../shared/types/opencode.types.js').Session} session - Session to set as current
  * @param {string} serverBaseUrl - Base URL of the server
  */
 export const setCurrentSession = (session, serverBaseUrl) => {
@@ -115,7 +139,7 @@ export const getSessionBaseUrl = () => {
  * @param {string} messageText - The message text to send
  * @param {string} mode - Message mode ('build' or 'plan')
  * @param {Object} selectedProject - Currently selected project
- * @returns {Promise<import('@/shared/types/opencode.types.js').SessionMessageResponse>} - Server response
+ * @returns {Promise<import('../../../../shared/types/opencode.types.js').SessionMessageResponse>} - Server response
  */
 export const sendMessageToSession = async (messageText, mode = 'build', selectedProject = null, selectedModel = null) => {
   if (!currentSession || !baseUrl) {
@@ -124,7 +148,7 @@ export const sendMessageToSession = async (messageText, mode = 'build', selected
 
   const messageUrl = `${baseUrl}/session/${currentSession.id}/message`;
 
-  /** @type {import('@/shared/types/opencode.types.js').SessionMessageRequest} */
+  /** @type {import('../../../../shared/types/opencode.types.js').SessionMessageRequest} */
    const messageBody = {
      agent: mode,
      parts: [{ type: 'text', text: messageText }]
@@ -161,7 +185,7 @@ export const sendMessageToSession = async (messageText, mode = 'build', selected
       throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
     }
 
-    /** @type {import('@/shared/types/opencode.types.js').SessionMessageResponse} */
+    /** @type {import('../../../../shared/types/opencode.types.js').SessionMessageResponse} */
     const data = await response.json();
     console.log('✅ Message sent successfully:', data);
     return data;

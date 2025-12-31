@@ -20,7 +20,7 @@ export { default as BreadcrumbSlider } from './BreadcrumbSlider';
 export { default as ConnectionModal } from './modals/ConnectionModal';
 export { default as ProjectSelectionModal } from './modals/ProjectSelectionModal';
 export { default as SessionSelectionModal } from './modals/SessionSelectionModal';
-export { default as DebugModal } from './modals/DebugModal';
+
 export { default as LogModal } from './modals/LogModal';
 
 // Status Components

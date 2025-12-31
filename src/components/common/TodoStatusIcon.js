@@ -7,7 +7,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
  * @param {Object} props - Component props
  * @param {string} props.status - Todo status: pending, in_progress, completed, cancelled
  */
-const StatusIcon = ({ status }) => {
+const TodoStatusIcon = ({ status }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
 
@@ -99,4 +99,4 @@ const StatusIcon = ({ status }) => {
   return <View style={{ marginRight: 8 }}>{renderIcon()}</View>;
 };
 
-export default StatusIcon;
+export default TodoStatusIcon;

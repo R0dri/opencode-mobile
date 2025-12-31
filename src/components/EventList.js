@@ -1,7 +1,71 @@
-import React, { useRef, useEffect, useState } from 'react';
+ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Markdown from 'react-native-markdown-display';
+import { useTheme } from '../shared/components/ThemeProvider';
+import SessionThinkingIndicator from './common/SessionThinkingIndicator';
 
+const getMarkdownStyles = (theme) => ({
+  body: {
+    color: theme.colors.textPrimary,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  heading1: {
+    color: theme.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  heading2: {
+    color: theme.colors.textPrimary,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  heading3: {
+    color: theme.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  paragraph: {
+    marginBottom: 8,
+  },
+  link: {
+    color: theme.colors.accent,
+    textDecorationLine: 'underline',
+  },
+  code_inline: {
+    backgroundColor: theme.colors.surface,
+    fontFamily: 'monospace',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  code_block: {
+    backgroundColor: theme.colors.surface,
+    fontFamily: 'monospace',
+    padding: 8,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  blockquote: {
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.border,
+    paddingLeft: 8,
+    marginLeft: 8,
+    fontStyle: 'italic',
+  },
+  list_item: {
+    marginBottom: 4,
+  },
+  strong: {
+    fontWeight: 'bold',
+  },
+  em: {
+    fontStyle: 'italic',
+  },
+});
 
 /**
  * EventList component for displaying SSE events
@@ -10,96 +74,53 @@ import Markdown from 'react-native-markdown-display';
  * @param {Object} props.groupedUnclassifiedMessages - Grouped unclassified messages
  * @param {string|null} props.error - Current error message
  * @param {Function} props.onClearError - Function to clear error
+ * @param {boolean} props.isThinking - Whether to show thinking indicator
  */
-const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError }) => {
-
+const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError, isThinking, onDebugPress }) => {
+  const theme = useTheme();
+  const markdownStyles = getMarkdownStyles(theme);
+  const styles = getStyles(theme);
+  const [debugVisible, setDebugVisible] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const scrollViewRef = useRef(null);
-  const lastScrollTime = useRef(0);
+  const previousEventsLength = useRef(0);
 
-  // Markdown styles matching app theme
-  const markdownStyles = {
-     body: {
-       color: '#333333',
-       fontSize: 16,
-       lineHeight: 24,
-     },
-    paragraph: {
-      marginTop: 0,
-      marginBottom: 4,
-    },
-     heading1: {
-       fontSize: 28,
-       fontWeight: 'bold',
-       color: '#333333',
-       marginBottom: 10,
-     },
-     heading2: {
-       fontSize: 24,
-       fontWeight: 'bold',
-       color: '#333333',
-       marginBottom: 8,
-     },
-     heading3: {
-       fontSize: 20,
-       fontWeight: 'bold',
-       color: '#333333',
-       marginBottom: 6,
-     },
-    strong: {
-      fontWeight: 'bold',
-    },
-    em: {
-      fontStyle: 'italic',
-    },
-     code_inline: {
-       backgroundColor: '#f5f5f5',
-       paddingHorizontal: 6,
-       paddingVertical: 3,
-       borderRadius: 3,
-       fontFamily: 'monospace',
-       fontSize: 14,
-     },
-     code_block: {
-       backgroundColor: '#f5f5f5',
-       padding: 10,
-       borderRadius: 4,
-       fontFamily: 'monospace',
-       fontSize: 14,
-       marginVertical: 6,
-     },
-    link: {
-      color: '#007bff',
-      textDecorationLine: 'underline',
-    },
-    list_item: {
-      marginBottom: 4,
-    },
-    bullet_list: {
-      marginBottom: 8,
-    },
-    ordered_list: {
-      marginBottom: 8,
-    },
-    blockquote: {
-      borderLeftWidth: 4,
-      borderLeftColor: '#e0e0e0',
-      paddingLeft: 8,
-      marginVertical: 4,
-      fontStyle: 'italic',
-    },
-  };
+  const hasUnclassifiedMessages = groupedUnclassifiedMessages && typeof groupedUnclassifiedMessages === 'object'
+    ? Object.values(groupedUnclassifiedMessages).flat().length > 0
+    : false;
 
   const scrollToBottom = () => {
-    setTimeout(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true });
-      }
-    }, 150);
+    scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
+  const handleScroll = (event) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+    const threshold = 50; // pixels from bottom to consider "at bottom"
+    const atBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - threshold;
+    setIsAtBottom(atBottom);
+  };
+
+  // Auto-scroll to bottom only on initial message load
   useEffect(() => {
-    scrollToBottom();
+    if (previousEventsLength.current === 0 && events.length > 0) {
+      scrollToBottom();
+    }
+    previousEventsLength.current = events.length;
   }, [events]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   const renderEventItem = ({ item }) => {
     // Don't render connection messages in the main UI - only show in logs
@@ -111,6 +132,8 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
     if (item.type === 'unclassified') {
       return null;
     }
+
+
 
     let itemStyle, typeStyle, messageStyle, containerStyle;
 
@@ -152,12 +175,18 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
       ...markdownStyles,
       body: {
         ...markdownStyles.body,
-        color: '#333333',
+        color: theme.colors.textPrimary,
       },
     };
 
+
+
+
+
+
+
     return (
-      <View key={item.id} style={[styles.eventContainer, containerStyle]}>
+      <View key={item.id} style={[styles.eventContainer, containerStyle]} pointerEvents="box-none">
         <View style={[styles.eventItem, itemStyle]} pointerEvents="box-none">
           <View style={[styles.markdownContainer, messageStyle]} pointerEvents="box-none">
             <Markdown
@@ -178,7 +207,7 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
     );
   };
 
-  const hasUnclassifiedMessages = Object.keys(groupedUnclassifiedMessages).length > 0;
+
 
   return (
     <View style={styles.eventsContainer}>
@@ -193,23 +222,31 @@ const EventList = ({ events, groupedUnclassifiedMessages, error, onClearError })
 
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
-        onContentSizeChange={() => scrollToBottom()}
+        style={styles.listContent}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         {events.map((item) => renderEventItem({ item }))}
+        {isThinking && <SessionThinkingIndicator isThinking={true} />}
       </ScrollView>
 
-
+      {!isAtBottom && (
+        <TouchableOpacity
+          style={styles.scrollToBottomButton}
+          onPress={scrollToBottom}
+        >
+          <Text style={styles.scrollToBottomText}>↓</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   eventsContainer: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.background,
   },
   markdownContainer: {
     alignSelf: 'flex-start',
@@ -218,20 +255,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffebee',
+    backgroundColor: theme.colors.errorBackground,
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#f44336',
+    borderLeftColor: theme.colors.statusUnreachable,
   },
   errorText: {
-    color: '#d32f2f',
+    color: theme.colors.errorText,
     fontSize: 14,
     flex: 1,
   },
   errorClose: {
-    color: '#d32f2f',
+    color: theme.colors.errorText,
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
@@ -246,21 +283,20 @@ const styles = StyleSheet.create({
       borderRadius: 0,
       borderLeftWidth: 4,
       borderRightWidth: 0,
-      shadowColor: '#000',
+      shadowColor: theme.colors.shadowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 2,
-      maxWidth: '97%',
     },
   messageItem: {
-    backgroundColor: '#ffffff',
-    borderLeftColor: '#007bff',
+    backgroundColor: theme.colors.background,
+    borderLeftColor: theme.colors.accent,
     borderLeftWidth: 4,
   },
   planMessageItem: {
-    backgroundColor: '#ffffff',
-    borderLeftColor: '#6200ee',
+    backgroundColor: theme.colors.background,
+    borderLeftColor: '#6f42c1', // Keep purple for plan mode distinction
     borderLeftWidth: 4,
   },
   connectionItem: {
@@ -280,68 +316,68 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   messageType: {
-    color: '#6200ee',
+    color: '#6f42c1', // Keep purple for plan mode
   },
   connectionType: {
-    color: '#2196f3',
+    color: theme.colors.statusConnecting,
   },
   errorType: {
-    color: '#d32f2f',
+    color: theme.colors.errorText,
   },
   eventMessage: {
     fontSize: 14,
     lineHeight: 20,
   },
   messageMessage: {
-    color: '#333333',
+    color: theme.colors.textPrimary,
   },
   connectionMessage: {
-    color: '#1976d2',
+    color: theme.colors.accentSecondary,
   },
   errorMessage: {
-    color: '#d32f2f',
+    color: theme.colors.errorText,
   },
   // Classified message styles
   finalizedItem: {
-    backgroundColor: '#f8f9fa',
-    borderLeftColor: '#007bff',
+    backgroundColor: theme.colors.surface,
+    borderLeftColor: theme.colors.accent,
     borderLeftWidth: 4,
   },
   planFinalizedItem: {
-    backgroundColor: '#f8f9fa',
-    borderLeftColor: '#6200ee',
+    backgroundColor: theme.colors.surface,
+    borderLeftColor: '#6f42c1',
     borderLeftWidth: 4,
   },
   finalizedType: {
-    color: '#007bff',
+    color: theme.colors.accent,
   },
   planFinalizedType: {
-    color: '#6200ee',
+    color: '#6f42c1',
   },
   finalizedMessage: {
-    color: '#2e7d32',
+    color: theme.colors.success,
   },
   streamingItem: {
-    backgroundColor: '#e3f2fd',
-    borderLeftColor: '#2196F3',
+    backgroundColor: theme.colors.surfaceSecondary,
+    borderLeftColor: theme.colors.statusConnecting,
     borderLeftWidth: 4,
   },
   streamingType: {
-    color: '#2196F3',
+    color: theme.colors.statusConnecting,
   },
   streamingMessage: {
-    color: '#1565c0',
+    color: theme.colors.accentSecondary,
   },
   sessionItem: {
-    backgroundColor: '#f5f5f5',
-    borderLeftColor: '#9E9E9E',
+    backgroundColor: theme.colors.surface,
+    borderLeftColor: theme.colors.statusUnknown,
     borderLeftWidth: 4,
   },
   sessionType: {
-    color: '#9E9E9E',
+    color: theme.colors.statusUnknown,
   },
   sessionMessage: {
-    color: '#424242',
+    color: theme.colors.textSecondary,
   },
 
   eventHeader: {
@@ -352,48 +388,48 @@ const styles = StyleSheet.create({
   },
   projectBadge: {
     fontSize: 12,
-    color: '#666666',
-    backgroundColor: '#e9ecef',
+    color: theme.colors.textSecondary,
+    backgroundColor: theme.colors.surfaceSecondary,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   debugButton: {
-    backgroundColor: '#ffc107',
+    backgroundColor: theme.colors.warning,
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   debugButtonText: {
-    color: '#333',
+    color: theme.colors.textPrimary,
     fontWeight: 'bold',
     fontSize: 14,
   },
   // Sent message styles
-   sentItem: {
-     backgroundColor: '#f8f9fa',
-     borderRightColor: '#28a745',
-     borderRightWidth: 4,
-     borderLeftWidth: 0,
-   },
+    sentItem: {
+      backgroundColor: theme.colors.surface,
+      borderRightColor: theme.colors.success,
+      borderRightWidth: 4,
+      borderLeftWidth: 0,
+    },
   sentType: {
-    color: '#2196F3',
+    color: theme.colors.statusConnecting,
   },
   sentMessage: {
-    color: '#1565C0',
+    color: theme.colors.accentSecondary,
   },
   // Session status styles
   sessionStatusItem: {
-    backgroundColor: '#e3f2fd',
-    borderLeftColor: '#2196F3',
+    backgroundColor: theme.colors.surfaceSecondary,
+    borderLeftColor: theme.colors.statusConnecting,
     borderLeftWidth: 4,
   },
   sessionStatusType: {
-    color: '#2196F3',
+    color: theme.colors.statusConnecting,
   },
   sessionStatusMessage: {
-    color: '#1565C0',
+    color: theme.colors.accentSecondary,
   },
   // Message alignment containers
   eventContainer: {
@@ -405,8 +441,25 @@ const styles = StyleSheet.create({
   rightAlignedContainer: {
     alignItems: 'flex-end',
   },
+  scrollToBottomButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: theme.colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: theme.colors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  scrollToBottomText: {
+    color: theme.colors.background,
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
 });
-
-
-
-export default EventList;

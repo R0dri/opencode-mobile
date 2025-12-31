@@ -10,33 +10,40 @@ export class SSEService {
     this.isConnected = false;
     this.reconnectTimeout = null;
     this.heartbeatInterval = null;
+    this.heartbeatCallback = null;
   }
 
   /**
    * Connect to SSE endpoint
-   * @param {string} url - SSE endpoint URL
-   * @param {Object} options - Connection options
-   * @returns {EventSource} - EventSource instance
-   */
-  connect(url, options = {}) {
-    // Close existing connection
-    this.disconnect();
+    * @param {string} url - SSE endpoint URL
+    * @param {Object} options - Connection options
+    * @param {Function} options.heartbeatCallback - Callback to run on heartbeat
+    * @returns {EventSource} - EventSource instance
+    */
+   connect(url, options = {}) {
+     // Close existing connection
+     this.disconnect();
 
-    console.log('SSE: Connecting to', url);
+     console.log('SSE: Connecting to', url);
 
-    this.eventSource = new EventSource(url, {
-      headers: {
-        'Accept': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        ...options.headers
-      }
-    });
+     // Store heartbeat callback
+     this.heartbeatCallback = options.heartbeatCallback || null;
+
+     this.eventSource = new EventSource(url, {
+       headers: {
+         'Accept': 'text/event-stream',
+         'Cache-Control': 'no-cache',
+         ...options.headers
+       }
+     });
 
     this.eventSource.addEventListener('open', () => {
       console.log('SSE: Connection opened');
       this.isConnected = true;
       this.startHeartbeat();
     });
+
+
 
     this.eventSource.addEventListener('error', (event) => {
       console.log('SSE: Connection error', event);
@@ -91,18 +98,26 @@ export class SSEService {
   /**
    * Start heartbeat monitoring
    */
-  startHeartbeat() {
-    this.stopHeartbeat();
-    this.heartbeatInterval = setInterval(() => {
-      if (this.eventSource && this.eventSource.readyState !== EventSource.OPEN) {
-        console.log('SSE: Heartbeat failed, reconnecting...');
-        this.isConnected = false;
-        // The error handler will trigger reconnection
-      } else {
-        console.log('SSE: Heartbeat OK');
-      }
-    }, 30000); // Check every 30 seconds
-  }
+   startHeartbeat() {
+     this.stopHeartbeat();
+     this.heartbeatInterval = setInterval(() => {
+       if (this.eventSource && this.eventSource.readyState !== EventSource.OPEN) {
+         console.log('SSE: Heartbeat failed, reconnecting...');
+         this.isConnected = false;
+         // The error handler will trigger reconnection
+       } else {
+         console.log('SSE: Heartbeat OK');
+         // Call heartbeat callback if provided
+         if (this.heartbeatCallback) {
+           try {
+             this.heartbeatCallback();
+           } catch (error) {
+             console.error('SSE: Heartbeat callback error:', error);
+           }
+         }
+       }
+     }, 30000); // Check every 30 seconds
+   }
 
   /**
    * Stop heartbeat monitoring

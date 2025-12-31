@@ -3,15 +3,40 @@
  * Handles fetching projects, filtering sessions, and project/session selection
  */
 
-import '@/shared/types/opencode.types.js';
-import { getRequestHeaders } from '@/services/api/requestUtils';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+/**
+ * Get common headers for all API requests
+ * @param {Object} additionalHeaders - Additional headers to include
+ * @param {Object} selectedProject - Currently selected project
+ * @returns {Object} - Headers object with x-opencode-directory
+ */
+const getRequestHeaders = (additionalHeaders = {}, selectedProject = null) => {
+  const getProjectPath = (selectedProject = null) => {
+    // Use selected project's directory/worktree path
+    if (selectedProject && selectedProject.worktree) {
+      return selectedProject.worktree;
+    }
+    if (selectedProject && selectedProject.directory) {
+      return selectedProject.directory;
+    }
+    // Fallback to current app directory if no project selected
+    return '/Users/rodri/Projects/opencode-mobile/opencode-mobile';
+  };
+
+  return {
+    'x-opencode-directory': getProjectPath(selectedProject),
+    'Accept': 'application/json',
+    ...additionalHeaders
+  };
+};
 
 /**
  * Fetch all available projects from the server
  * @param {string} baseUrl - Base URL of the opencode server
  * @param {Object} selectedProject - Currently selected project (for headers)
- * @returns {Promise<Array<import('@/shared/types/opencode.types.js').Project>>} - Array of projects
+ * @returns {Promise<Array<import('../../types/project.types.js').Project>>} - Array of projects
  */
 export const fetchProjects = async (baseUrl, selectedProject = null) => {
   try {
@@ -33,7 +58,7 @@ export const fetchProjects = async (baseUrl, selectedProject = null) => {
       throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
     }
 
-    /** @type {Array<import('@/shared/types/opencode.types.js').Project>} */
+    /** @type {Array<import('../../types/project.types.js').Project>} */
     const projects = await response.json();
 
     return projects;
@@ -96,7 +121,7 @@ export const fetchModels = async (baseUrl, selectedProject = null) => {
  * @param {string} baseUrl - Base URL of the opencode server
  * @param {string} projectId - Project ID to filter sessions
  * @param {Object} selectedProject - Currently selected project (for headers)
- * @returns {Promise<Array<import('@/shared/types/opencode.types.js').Session>>} - Array of sessions for the project
+ * @returns {Promise<Array<import('../../../../shared/types/opencode.types.js').Session>>} - Array of sessions for the project
  */
 export const fetchSessionsForProject = async (baseUrl, projectId, selectedProject = null) => {
   try {
@@ -118,11 +143,8 @@ export const fetchSessionsForProject = async (baseUrl, projectId, selectedProjec
       throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
     }
 
-    /** @type {Array<import('@/shared/types/opencode.types.js').Session>} */
-    const allSessions = await response.json();
-
-    // Filter sessions by project ID
-    const projectSessions = allSessions.filter(session => session.projectID === projectId);
+    /** @type {Array<import('../../../../shared/types/opencode.types.js').Session>} */
+    const projectSessions = await response.json();
 
     return projectSessions;
   } catch (error) {
@@ -146,7 +168,7 @@ export const getProjectDisplayName = (worktree) => {
 
 /**
  * Get session summary text for display
- * @param {import('@/shared/types/opencode.types.js').Session} session - Session object
+ * @param {import('../../../../shared/types/opencode.types.js').Session} session - Session object
  * @returns {string} - Summary text
  */
 export const getSessionSummaryText = (session) => {
@@ -160,6 +182,41 @@ export const getSessionSummaryText = (session) => {
   if (files > 0) parts.push(`${files} files`);
 
   return parts.length > 0 ? ` (${parts.join(', ')})` : '';
+};
+
+/**
+ * Fetch session statuses for all sessions
+ * @param {string} baseUrl - Base URL of the opencode server
+ * @param {Object} selectedProject - Currently selected project (for headers)
+ * @returns {Promise<Object>} - Object mapping session IDs to status objects {type: "busy"|"idle"}
+ */
+export const fetchSessionStatuses = async (baseUrl, selectedProject = null) => {
+  try {
+    const response = await fetch(`${baseUrl}/session/status`, {
+      method: 'GET',
+      headers: getRequestHeaders({
+        'Accept': 'application/json'
+      }, selectedProject)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch session statuses: ${response.status} ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error(`Expected JSON response, got ${contentType || 'unknown content-type'}`);
+    }
+
+    /** @type {Object} */
+    const statuses = await response.json();
+
+    return statuses;
+  } catch (error) {
+    console.error('❌ Session statuses fetch failed:', error);
+    // Return empty object instead of throwing to prevent app crashes
+    return {};
+  }
 };
 
 /**

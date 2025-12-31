@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Custom hook for managing session status and thinking animation
@@ -40,8 +40,12 @@ export const useSessionStatus = (selectedSession) => {
     } else if (statusType === 'idle') {
       setIsThinking(false);
     }
-    setIsThinking(false);
   };
+
+  // Manual reset function
+  const resetThinking = useCallback(() => {
+    setIsThinking(false);
+  }, []);
 
   return {
     isThinking,

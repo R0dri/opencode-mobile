@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true,
@@ -33,7 +33,7 @@
     "updates": {
       "url": "https://u.expo.dev/2acd63e2-d8ab-4f1d-8270-f4fd80a3667b"
     },
-    "platforms": ["ios"],
+    "platforms": ["ios", "web"],
     "plugins": [
       "expo-asset"
     ]

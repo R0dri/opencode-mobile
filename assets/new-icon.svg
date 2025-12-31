@@ -1,4 +1,55 @@
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="20" y="20" width="60" height="60" fill="#656363"/>
-  <rect x="35" y="35" width="30" height="30" fill="#CFCECD"/>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- O -->
+  <!-- row 0 -->
+  <rect x="64" y="80" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="80" y="80" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="96" y="80" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 1 -->
+  <rect x="48" y="96" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="112" y="96" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 2 -->
+  <rect x="48" y="112" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="112" y="112" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 3 -->
+  <rect x="48" y="128" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="112" y="128" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 4 -->
+  <rect x="48" y="144" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="112" y="144" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 5 -->
+  <rect x="48" y="160" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="112" y="160" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 6 -->
+  <rect x="64" y="176" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="80" y="176" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="96" y="176" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- M -->
+  <!-- row 0 -->
+  <rect x="160" y="80" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="192" y="80" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 1 -->
+  <rect x="144" y="96" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="160" y="96" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="192" y="96" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="208" y="96" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 2 -->
+  <rect x="144" y="112" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="176" y="112" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="208" y="112" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 3 -->
+  <rect x="144" y="128" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="176" y="128" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="208" y="128" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 4 -->
+  <rect x="144" y="144" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="176" y="144" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="208" y="144" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 5 -->
+  <rect x="144" y="160" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="176" y="160" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="208" y="160" width="16" height="16"   fill="#C0C0C0"/>
+  <!-- row 6 -->
+  <rect x="144" y="176" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="176" y="176" width="16" height="16"   fill="#C0C0C0"/>
+  <rect x="208" y="176" width="16" height="16"   fill="#C0C0C0"/>
 </svg>

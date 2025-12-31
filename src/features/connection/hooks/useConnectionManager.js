@@ -1,7 +1,7 @@
 // URL validation and connectivity testing
 import { useState } from 'react';
-import { validateUrl } from '@/shared/helpers/validation';
-import { apiClient } from '@/services/api/client';
+import { validateUrl } from '../../../shared/helpers/validation';
+import { apiClient } from '../../../services/api/client';
 
 export const useConnectionManager = () => {
   const [isServerReachable, setIsServerReachable] = useState(null);
@@ -13,7 +13,7 @@ export const useConnectionManager = () => {
 
     try {
       const testUrl = url.replace('/global/event', '');
-      await apiClient.get(`${testUrl}/health`, {}, null); // Simple health check
+      await apiClient.get(`${testUrl}/command`, {}, null); // Simple connectivity check
       setIsServerReachable(true);
       return true;
     } catch (error) {

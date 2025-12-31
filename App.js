@@ -1,53 +1,41 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// import { NavigationContainer } from '@react-navigation/native';
+// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import EventScreen from './src/screens/EventScreen';
-import SessionDrawer from './src/components/SessionDrawer';
 import { useSSE } from './src/hooks/useSSE';
+import { ThemeProvider, useTheme } from './src/shared/components/ThemeProvider';
 
-const Drawer = createDrawerNavigator();
+// App start - entry point
+console.log('\n\n===== APP STARTED =====\n\n');
 
-export default function App() {
+// const Stack = createNativeStackNavigator();
+
+function AppContent() {
   const sseData = useSSE();
-
-  useEffect(() => {
-    console.log('\n\n🚀 ===== APP STARTED =====\n\n');
-  }, []);
+  const theme = useTheme();
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <NavigationContainer>
-        <Drawer.Navigator
-          drawerContent={(props) => (
-            <SessionDrawer
-              {...props}
-              sessions={sseData.projectSessions}
-              selectedSession={sseData.selectedSession}
-              onSessionSelect={sseData.selectSession}
-              deleteSession={sseData.deleteSession}
-            />
-          )}
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Drawer.Screen name="EventScreen">
-            {(props) => <EventScreen {...props} {...sseData} />}
-          </Drawer.Screen>
-        </Drawer.Navigator>
-      </NavigationContainer>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <SafeAreaProvider>
+        <EventScreen {...sseData} />
+      </SafeAreaProvider>
+      <StatusBar style={theme.colors.statusBarStyle} backgroundColor={theme.colors.background} />
     </GestureHandlerRootView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-});
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+

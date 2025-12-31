@@ -14,17 +14,20 @@ const MessageFilter = ({
   selectedSession,
   groupedUnclassifiedMessages,
   onClearError,
-  allUnclassifiedMessages // Pass original unclassified messages for debug button
+  allUnclassifiedMessages, // Pass original unclassified messages for debug button
+  isThinking
 }) => {
 
 
   // Filter events by session ID
   const filteredEvents = useMemo(() => {
+    console.log('Filtering events for session:', selectedSession?.id, 'total events:', events.length);
     const filtered = [];
 
     events.forEach(event => {
       // Filter by session ID if a session is selected
-      if (selectedSession && event.sessionId !== selectedSession.id && event.sessionId !== undefined) {
+      if (selectedSession && event.sessionId && event.sessionId !== selectedSession.id) {
+        console.log('Filtering out event from session:', event.sessionId);
         // Silently filter out messages from other sessions
         return; // Don't show messages from other sessions
       }
@@ -52,6 +55,7 @@ const MessageFilter = ({
       filtered.push(event);
     });
 
+    console.log('Filtered events count:', filtered.length);
     return filtered;
   }, [events, selectedSession]);
 
@@ -79,6 +83,7 @@ const MessageFilter = ({
       groupedUnclassifiedMessages={allUnclassifiedMessages} // Pass original for debug button
       error={null} // Handle errors separately
       onClearError={onClearError}
+      isThinking={isThinking}
     />
   );
 };
