@@ -2,25 +2,25 @@
 export const createStyles = (theme, insets) => ({
   // OVERLAY & POSITIONING
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   fullTouchable: {
     flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
   },
 
   // DRAWER CONTAINERS
   drawer: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     top: insets.top,
     bottom: 0,
-    width: '80%',  // CSS percentage instead of JavaScript calculation
+    width: "80%", // CSS percentage instead of JavaScript calculation
     maxWidth: 360, // Prevent overly wide drawers
     minWidth: 280, // Ensure usable width on small screens
     backgroundColor: theme.colors.surface,
@@ -41,24 +41,24 @@ export const createStyles = (theme, insets) => ({
 
   // HEADER & NAVIGATION
   drawerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
   projectTitle: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
   },
 
@@ -67,22 +67,23 @@ export const createStyles = (theme, insets) => ({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     marginTop: 0,
-    marginBottom: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'stretch',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "stretch",
     minHeight: 36,
+    padding: 0,
   },
   sectionHeaderNoMargin: {
     marginBottom: 0,
   },
   sectionHeaderLeft: {
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingLeft: 12,
+    // paddingVertical: 8,
   },
   sectionHeaderText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: "600",
     color: theme.colors.textSecondary,
   },
 
@@ -91,8 +92,8 @@ export const createStyles = (theme, insets) => ({
     padding: 8,
   },
   createButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.surfaceSecondary,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -100,7 +101,7 @@ export const createStyles = (theme, insets) => ({
   },
   createButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.success,
   },
   createIcon: {
@@ -108,24 +109,37 @@ export const createStyles = (theme, insets) => ({
   },
   createButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.textPrimary,
   },
   disabledText: {
     color: theme.colors.textMuted,
   },
   inlineNewSessionButton: {
-    backgroundColor: theme.colors.surfaceSecondary,
+    backgroundColor: "rgba(34, 197, 94, 0.1)", // Light green transparent background
     borderRadius: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   inlineNewSessionText: {
     fontSize: 12,
     color: theme.colors.success,
-    fontWeight: '600',
+    fontWeight: "600",
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 12,
+  },
+  editButton: {
+    backgroundColor: "rgba(251, 191, 36, 0.1)", // Light yellow transparent background
+    borderRadius: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editButtonText: {
+    fontSize: 12,
+    color: theme.colors.warning, // Yellow text color
+    fontWeight: "600",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
 
   // SESSION ITEMS
@@ -138,84 +152,73 @@ export const createStyles = (theme, insets) => ({
     flex: 1,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   activeSessionItem: {
-    backgroundColor: theme.colors.surfaceSecondary,
+    backgroundColor: theme.colors.surface,
   },
   activeSessionTitle: {
     color: theme.colors.accent,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   childSessionItem: {
-    marginLeft: 24, // Indent child sessions
-    borderLeftWidth: 2,
-    borderLeftColor: theme.colors.borderLight,
-    backgroundColor: theme.colors.surfaceSecondary,
+    backgroundColor: theme.colors.surfaceSecondary, // Subtle background to indicate hierarchy
   },
   childSessionTouchable: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 16, // Indent child sessions
+    paddingVertical: 10, // Thinner than parent sessions (14px)
   },
-   activeChildSessionItem: {
-     backgroundColor: theme.colors.surfaceSecondary,
-   },
-   orphanedSessionItem: {
-     backgroundColor: theme.colors.surfaceSecondary,
-     borderLeftWidth: 3,
-     borderLeftColor: theme.colors.warning,
-   },
-   childIndent: {
+  orphanedSessionItem: {
+    backgroundColor: theme.colors.surfaceSecondary,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.warning,
+  },
+  childIndent: {
     width: 16,
   },
   childSessionContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   expandIcon: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    transition: 'transform 0.2s ease',
+    transition: "transform 0.2s ease",
   },
   sessionContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   sessionHeader: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   sessionMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 12,
     gap: 8,
     flexShrink: 0,
   },
   sessionMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 8,
   },
   metaLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   metaRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   sessionCount: {
     fontSize: 12,
@@ -229,16 +232,16 @@ export const createStyles = (theme, insets) => ({
     minWidth: 32,
     minHeight: 32,
     borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
     flexShrink: 0,
   },
   compactDeleteIcon: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: theme.colors.textMuted,
   },
   sessionSummary: {
@@ -255,8 +258,8 @@ export const createStyles = (theme, insets) => ({
   },
   sessionTitleContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   titleTextContainer: {
     flex: 1,
@@ -278,24 +281,27 @@ export const createStyles = (theme, insets) => ({
   },
   newSessionTitle: {
     color: theme.colors.success,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
   busySessionTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
+  },
+  childSessionTitle: {
+    color: theme.colors.textMuted, // Muted text color for child sessions
   },
   inlineSummary: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   titleContainer: {
     flex: 1,
   },
   timeContainer: {
     width: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   sessionTime: {
     fontSize: 14,
@@ -316,7 +322,7 @@ export const createStyles = (theme, insets) => ({
 
   deleteText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: theme.colors.error,
   },
 
@@ -329,9 +335,9 @@ export const createStyles = (theme, insets) => ({
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginRight: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
     gap: 8,
   },
   dropdownIcon: {
@@ -339,16 +345,16 @@ export const createStyles = (theme, insets) => ({
   },
   dropdownOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "flex-start",
+    alignItems: "center",
     paddingTop: 100,
   },
   dropdownContainer: {
     backgroundColor: theme.colors.surface,
     paddingVertical: 8,
     maxHeight: 450,
-    width: '90%',
+    width: "90%",
     elevation: 5,
     shadowColor: theme.colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
@@ -357,8 +363,8 @@ export const createStyles = (theme, insets) => ({
   },
   dropdownHeader: {
     fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 2,
@@ -370,8 +376,8 @@ export const createStyles = (theme, insets) => ({
     maxHeight: 350,
   },
   projectItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     marginBottom: 8,
     backgroundColor: theme.colors.surface,
@@ -383,24 +389,24 @@ export const createStyles = (theme, insets) => ({
   },
   projectInfo: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: "column",
+    justifyContent: "center",
   },
   projectHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 6,
   },
   projectItemTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.textPrimary,
     flex: 1,
   },
   activeProjectTitle: {
     color: theme.colors.accent,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   vcsBadge: {
     backgroundColor: theme.colors.surfaceSecondary,
@@ -409,11 +415,11 @@ export const createStyles = (theme, insets) => ({
   },
   vcsBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.success,
   },
   projectFooter: {
-    flexDirection: 'column',
+    flexDirection: "column",
   },
   projectPath: {
     fontSize: 12,
@@ -458,10 +464,10 @@ export const createStyles = (theme, insets) => ({
 
   // ANIMATIONS
   animatedExpand: {
-    transform: [{ rotate: '0deg' }],
+    transform: [{ rotate: "0deg" }],
   },
   animatedCollapse: {
-    transform: [{ rotate: '180deg' }],
+    transform: [{ rotate: "180deg" }],
   },
 
   // ICONS & VISUAL ELEMENTS

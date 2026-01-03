@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { SectionList, StyleSheet, View, TouchableOpacity, Text, Alert } from 'react-native';
 import { useTheme } from '@/shared/components/ThemeProvider';
 import { groupSessionsByDateAndParent } from './utils';
@@ -31,6 +31,9 @@ const SessionListDrawer = ({
   const theme = useTheme();
   const styles = createStyles(theme, { top: 0 }, 400); // Using dummy insets and width
 
+  const [editMode, setEditMode] = useState(false);
+  const toggleEditMode = useCallback(() => setEditMode(prev => !prev), []);
+
   const sections = useMemo(() => {
     if (sessionLoading) return [];
     return groupSessionsByDateAndParent(sessions);
@@ -44,42 +47,17 @@ const SessionListDrawer = ({
 
     return (
       <View>
-        {/* Parent Row */}
-        <View style={[styles.sessionItem, isActive && styles.activeSessionItem]}>
-          <TouchableOpacity
-            style={styles.sessionTouchable}
-            onPress={() => onSessionSelect(parent)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.titleContainer}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.sessionTitleRow, isActive && styles.activeSessionTitle, isParentBusy && styles.busySessionTitle]} numberOfLines={2} ellipsizeMode="tail">
-                    {parent.title || 'Untitled Session'}
-                  </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {getColoredSessionSummary(parent, theme)}
-                  </View>
-                </View>
-          <TouchableOpacity
-            style={styles.compactDeleteButton}
-            onPress={() => handleDeleteParent(parent.id)}
-            accessibilityLabel={`Delete session ${parent.title || 'Untitled Session'} and all children`}
-            accessibilityRole="button"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
-          >
-                  <Text style={styles.compactDeleteIcon}>×</Text>
-                </TouchableOpacity>
-                {children.length > 0 && (
-                  <Text style={styles.sessionCount}>
-                    {children.length}
-                  </Text>
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {/* Parent Row - now using SessionItem for consistency */}
+        <SessionItem
+          session={parent}
+          isActive={isActive}
+          status={sessionStatuses[parent.id]}
+          onSelect={() => onSessionSelect(parent)}
+          onDelete={() => handleDeleteParent(parent.id)}
+          isParent={true}
+          childrenCount={children.length}
+          showDeleteButton={editMode}
+        />
 
         {/* Child Rows - show when parent is selected */}
         {shouldShowChildren && children.map(child => (
@@ -91,6 +69,7 @@ const SessionListDrawer = ({
             onSelect={() => onSessionSelect(child)}
             onDelete={() => deleteSession(child.id)}
             isChild={true}
+            showDeleteButton={editMode}
           />
         ))}
 
@@ -104,6 +83,8 @@ const SessionListDrawer = ({
       title={section.title}
       hasInlineNewSession={section.title === 'Today'}
       onCreateSession={createSession}
+      editMode={editMode}
+      onToggleEditMode={toggleEditMode}
     />
   );
 
@@ -141,6 +122,7 @@ const SessionListDrawer = ({
           onSelect={() => onSessionSelect(item)}
           onDelete={() => deleteSession(item.id)}
           isOrphaned={true}
+          showDeleteButton={editMode}
         />
       );
     }
@@ -158,6 +140,7 @@ const SessionListDrawer = ({
         status={sessionStatuses[item.id]}
         onSelect={() => onSessionSelect(item)}
         onDelete={() => deleteSession(item.id)}
+        showDeleteButton={editMode}
       />
     );
   };
