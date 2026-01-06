@@ -1,7 +1,7 @@
 // URL validation and connectivity testing
 import { useState } from 'react';
-import { validateUrl } from '../../../shared/helpers/validation';
-import { apiClient } from '../../../services/api/client';
+import { validateUrl } from '@/shared/helpers/validation';
+import { apiClient } from '@/services/api/client';
 
 export const useConnectionManager = () => {
   const [isServerReachable, setIsServerReachable] = useState(null);

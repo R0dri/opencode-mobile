@@ -69,6 +69,8 @@ const getStyles = (theme) => StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: theme.colors.background,
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   title: {
     fontSize: 24,

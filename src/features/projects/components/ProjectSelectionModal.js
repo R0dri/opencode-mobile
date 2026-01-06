@@ -23,27 +23,30 @@ const ProjectSelectionModal = ({ visible, onClose, projects, selectedProject, on
 
   return (
     <Modal visible={visible} animationType="slide">
-      <View style={styles.container}>
-        <Text style={styles.title}>Select Project</Text>
-        <FlatList
-          data={projects}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-             <TouchableOpacity onPress={() => handleSelect(item)} style={styles.item}>
-               <Text style={styles.itemText}>{item.name}</Text>
-             </TouchableOpacity>
-           )}
-         />
-         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-           <Text style={styles.closeButtonText}>Close</Text>
-         </TouchableOpacity>
+      <View style={styles.modalWrapper}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Select Project</Text>
+          <FlatList
+            data={projects}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+               <TouchableOpacity onPress={() => handleSelect(item)} style={styles.item}>
+                 <Text style={styles.itemText}>{item.name}</Text>
+               </TouchableOpacity>
+             )}
+           />
+           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+             <Text style={styles.closeButtonText}>Close</Text>
+           </TouchableOpacity>
+        </View>
       </View>
     </Modal>
   );
 };
 
 const getStyles = (theme) => StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: theme.colors.background },
+  modalWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  container: { flex: 1, maxWidth: 600, width: '100%', padding: 20, backgroundColor: theme.colors.background, borderRadius: 10 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: theme.colors.textPrimary },
   item: { padding: 10, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
   itemText: { color: theme.colors.textPrimary },

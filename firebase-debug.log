@@ -1,298 +1,152 @@
-[debug] [2025-12-28T20:45:27.427Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-28T20:45:27.432Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-28T20:45:27.432Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-28T20:45:27.432Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-28T20:45:27.435Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:27.436Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:27.437Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:27.437Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:27.439Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-28T20:45:27.466Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-28T20:45:28.785Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-28T20:45:28.785Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-28T20:45:28.791Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.791Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.810Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.810Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.811Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.811Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.812Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2025-12-28T20:45:28.812Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:45:28.814Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2025-12-28T20:45:28.814Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:45:28.815Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
-[debug] [2025-12-28T20:45:28.815Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:45:28.922Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-28T20:45:28.922Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-28T20:45:28.923Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.923Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.925Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.925Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.926Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.926Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:28.926Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2025-12-28T20:45:28.926Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:45:28.927Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2025-12-28T20:45:28.927Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:45:28.929Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
-[debug] [2025-12-28T20:45:28.930Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:45:29.648Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-28T20:45:29.650Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-28T20:45:29.651Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-28T20:45:29.651Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-28T20:45:29.651Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:29.651Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:45:29.651Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-28T20:45:29.951Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
-[debug] [2025-12-28T20:45:29.951Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
-[debug] [2025-12-28T20:45:30.029Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2025-12-28T20:45:30.029Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2025-12-28T20:45:30.030Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2025-12-28T20:45:30.030Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2025-12-28T20:45:30.752Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-28T20:45:30.753Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-28T20:45:30.753Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-28T20:45:30.902Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
-[debug] [2025-12-28T20:45:30.902Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
-[debug] [2025-12-28T20:45:31.131Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2025-12-28T20:45:31.131Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2025-12-28T20:45:31.133Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2025-12-28T20:45:31.133Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2025-12-28T20:51:19.920Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-28T20:51:19.924Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-28T20:51:19.924Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-28T20:51:19.924Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-28T20:51:19.927Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:19.928Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:19.929Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:19.929Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:19.931Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-28T20:51:19.956Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-28T20:51:21.330Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-28T20:51:21.331Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-28T20:51:21.337Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.337Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.355Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.356Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.356Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.356Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.358Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2025-12-28T20:51:21.358Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:51:21.360Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2025-12-28T20:51:21.360Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:51:21.361Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
-[debug] [2025-12-28T20:51:21.361Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:51:21.387Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-28T20:51:21.387Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-28T20:51:21.388Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.388Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.397Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.397Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.397Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.397Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:21.397Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2025-12-28T20:51:21.397Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:51:21.399Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2025-12-28T20:51:21.399Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:51:21.401Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
-[debug] [2025-12-28T20:51:21.401Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-28T20:51:22.110Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-28T20:51:22.112Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-28T20:51:22.113Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-28T20:51:22.113Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-28T20:51:22.113Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:22.113Z] Checked if tokens are valid: true, expires at: 1766958314047
-[debug] [2025-12-28T20:51:22.113Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-28T20:51:22.458Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
-[debug] [2025-12-28T20:51:22.458Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
-[debug] [2025-12-28T20:51:22.467Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
-[debug] [2025-12-28T20:51:22.467Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
-[debug] [2025-12-28T20:51:22.548Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2025-12-28T20:51:22.548Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2025-12-28T20:51:22.614Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2025-12-28T20:51:22.614Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2025-12-28T20:51:22.615Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2025-12-28T20:51:22.616Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2025-12-28T20:51:22.713Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2025-12-28T20:51:22.714Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2025-12-28T20:51:23.212Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-28T20:51:23.213Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-28T20:51:23.214Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-30T14:01:31.908Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-30T14:01:31.912Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-30T14:01:31.913Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-30T14:01:31.913Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-30T14:01:31.916Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:31.917Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:31.919Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:31.919Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:31.921Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-30T14:01:31.948Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-30T14:01:33.082Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-30T14:01:33.083Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-30T14:01:33.091Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.092Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.116Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.116Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.117Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.117Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.118Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2025-12-30T14:01:33.118Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-30T14:01:33.120Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2025-12-30T14:01:33.120Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-30T14:01:33.121Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
-[debug] [2025-12-30T14:01:33.121Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-30T14:01:33.173Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-30T14:01:33.173Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-30T14:01:33.174Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.174Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.184Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.184Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.184Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.184Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:33.184Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2025-12-30T14:01:33.184Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-30T14:01:33.186Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2025-12-30T14:01:33.186Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-30T14:01:33.188Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
-[debug] [2025-12-30T14:01:33.188Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2025-12-30T14:01:34.222Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-30T14:01:34.226Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2025-12-30T14:01:34.227Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-12-30T14:01:34.227Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2025-12-30T14:01:34.227Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:34.227Z] Checked if tokens are valid: true, expires at: 1767106848354
-[debug] [2025-12-30T14:01:34.227Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2025-12-30T14:01:34.302Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
-[debug] [2025-12-30T14:01:34.302Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
-[debug] [2025-12-30T14:01:34.383Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2025-12-30T14:01:34.383Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2025-12-30T14:01:34.389Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2025-12-30T14:01:34.390Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2025-12-30T14:01:35.054Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
-[debug] [2025-12-30T14:01:35.054Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
-[debug] [2025-12-30T14:01:35.392Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2025-12-30T14:01:35.393Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2025-12-30T14:01:35.394Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2025-12-30T14:01:35.394Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2025-12-30T14:01:35.399Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2025-12-30T14:01:35.399Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2025-12-30T14:01:35.400Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:55.269Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:55.282Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:55.284Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:55.284Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T15:22:55.286Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T15:22:55.286Z] Checked if tokens are valid: false, expires at: 1767202254916
-[debug] [2026-01-02T15:22:55.288Z] Checked if tokens are valid: false, expires at: 1767202254916
-[debug] [2026-01-02T15:22:55.288Z] > refreshing access token with scopes: []
-[debug] [2026-01-02T15:22:55.290Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
-[debug] [2026-01-02T15:22:55.291Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2026-01-02T15:22:55.296Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T15:22:55.296Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T15:22:55.296Z] Checked if tokens are valid: false, expires at: 1767202254916
-[debug] [2026-01-02T15:22:55.297Z] Checked if tokens are valid: false, expires at: 1767202254916
-[debug] [2026-01-02T15:22:55.297Z] > refreshing access token with scopes: []
-[debug] [2026-01-02T15:22:55.297Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
-[debug] [2026-01-02T15:22:55.297Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2026-01-02T15:22:55.551Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
-[debug] [2026-01-02T15:22:55.551Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2026-01-02T15:22:55.573Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2026-01-02T15:22:55.656Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
-[debug] [2026-01-02T15:22:55.656Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2026-01-02T15:22:55.671Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2026-01-02T15:22:56.693Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2026-01-02T15:22:56.694Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2026-01-02T15:22:56.695Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:56.757Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:56.757Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:56.792Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:56.792Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:56.792Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2026-01-02T15:22:56.792Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T15:22:56.794Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2026-01-02T15:22:56.794Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T15:22:57.757Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2026-01-02T15:22:57.757Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2026-01-02T15:22:57.758Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:57.759Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:57.759Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:57.766Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:57.766Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:57.767Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2026-01-02T15:22:57.767Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T15:22:57.769Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2026-01-02T15:22:57.769Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T15:22:58.023Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2026-01-02T15:22:58.023Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2026-01-02T15:22:58.043Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2026-01-02T15:22:58.043Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2026-01-02T15:22:58.044Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:58.104Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:58.106Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:58.108Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T15:22:58.108Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T15:22:58.108Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:58.109Z] Checked if tokens are valid: true, expires at: 1767370974656
-[debug] [2026-01-02T15:22:58.109Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2026-01-02T15:22:59.000Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2026-01-02T15:22:59.001Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2026-01-02T15:22:59.021Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2026-01-02T15:22:59.022Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2026-01-02T15:22:59.235Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2026-01-02T15:22:59.235Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2026-01-02T15:22:59.237Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:59.242Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T15:22:59.244Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T15:22:59.244Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T22:08:27.802Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:27.813Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:27.820Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:27.822Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T22:08:27.826Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T22:08:27.828Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:27.831Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:27.832Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T22:08:27.832Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T22:08:27.833Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2026-01-02T22:08:27.839Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:27.840Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:27.840Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
-[debug] [2026-01-02T22:08:28.977Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2026-01-02T22:08:28.978Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2026-01-02T22:08:28.979Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:28.988Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:28.988Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.031Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.031Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.031Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2026-01-02T22:08:29.031Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T22:08:29.035Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2026-01-02T22:08:29.036Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T22:08:29.169Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
-[debug] [2026-01-02T22:08:29.169Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
-[debug] [2026-01-02T22:08:29.169Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:29.170Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.170Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.179Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.179Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:29.180Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
-[debug] [2026-01-02T22:08:29.180Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T22:08:29.181Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
-[debug] [2026-01-02T22:08:29.181Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
-[debug] [2026-01-02T22:08:30.306Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2026-01-02T22:08:30.306Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2026-01-02T22:08:30.308Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2026-01-02T22:08:30.308Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2026-01-02T22:08:31.262Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
-[debug] [2026-01-02T22:08:31.264Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
-[debug] [2026-01-02T22:08:31.476Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
-[debug] [2026-01-02T22:08:31.476Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
-[debug] [2026-01-02T22:08:31.477Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:31.524Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:31.525Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
-[debug] [2026-01-02T22:08:31.525Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-02T22:08:31.525Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
-[debug] [2026-01-02T22:08:31.525Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:31.525Z] Checked if tokens are valid: true, expires at: 1767395304343
-[debug] [2026-01-02T22:08:31.525Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-05T14:17:18.161Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:18.173Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:18.176Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:18.178Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-05T14:17:18.180Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-05T14:17:18.185Z] Checked if tokens are valid: false, expires at: 1767395304343
+[debug] [2026-01-05T14:17:18.190Z] Checked if tokens are valid: false, expires at: 1767395304343
+[debug] [2026-01-05T14:17:18.191Z] > refreshing access token with scopes: []
+[debug] [2026-01-05T14:17:18.197Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-05T14:17:18.198Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-05T14:17:18.203Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-05T14:17:18.204Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-05T14:17:18.204Z] Checked if tokens are valid: false, expires at: 1767395304343
+[debug] [2026-01-05T14:17:18.204Z] Checked if tokens are valid: false, expires at: 1767395304343
+[debug] [2026-01-05T14:17:18.204Z] > refreshing access token with scopes: []
+[debug] [2026-01-05T14:17:18.205Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-05T14:17:18.205Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-05T14:17:18.432Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-05T14:17:18.432Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-05T14:17:18.490Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-05T14:17:18.493Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-05T14:17:18.493Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-05T14:17:18.529Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-05T14:17:19.665Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-05T14:17:19.671Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-05T14:17:19.676Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:19.760Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:19.760Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:19.871Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:19.872Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:19.872Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-05T14:17:19.872Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-05T14:17:19.885Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-05T14:17:19.886Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-05T14:17:20.667Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-05T14:17:20.668Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-05T14:17:20.668Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:20.668Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:20.668Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:20.675Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:20.675Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:20.678Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-05T14:17:20.680Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-05T14:17:20.684Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-05T14:17:20.684Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-05T14:17:21.156Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-05T14:17:21.156Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-05T14:17:21.173Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-05T14:17:21.173Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-05T14:17:21.174Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:21.229Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:21.230Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:21.230Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-05T14:17:21.230Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-05T14:17:21.231Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:21.231Z] Checked if tokens are valid: true, expires at: 1767626237493
+[debug] [2026-01-05T14:17:21.231Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-05T14:17:21.980Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-05T14:17:21.980Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-05T14:17:22.330Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-05T14:17:22.331Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-05T14:17:22.331Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:22.333Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-05T14:17:22.333Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-05T14:17:22.333Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-05T14:17:22.343Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-05T14:17:22.343Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-06T17:53:04.724Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-06T17:53:04.740Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-06T17:53:04.740Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-06T17:53:04.741Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-06T17:53:04.741Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-06T17:53:04.741Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-06T17:53:04.744Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:04.746Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:04.746Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:04.746Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:04.747Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:04.747Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:04.748Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-06T17:53:04.777Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-06T17:53:04.786Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-06T17:53:05.194Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-06T17:53:05.194Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-06T17:53:05.200Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:05.201Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:05.221Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:05.221Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:05.222Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:05.222Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:05.222Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-06T17:53:05.222Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:05.226Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-06T17:53:05.226Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:05.227Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
+[debug] [2026-01-06T17:53:05.227Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.021Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-06T17:53:06.021Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-06T17:53:06.023Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.023Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.026Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.026Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.027Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.027Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.027Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-06T17:53:06.027Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.029Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-06T17:53:06.029Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.032Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
+[debug] [2026-01-06T17:53:06.032Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.146Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-06T17:53:06.146Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-06T17:53:06.147Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.147Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.155Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.155Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.155Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.155Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.155Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-01-06T17:53:06.156Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.162Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-01-06T17:53:06.162Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.163Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [none]
+[debug] [2026-01-06T17:53:06.163Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com x-goog-quota-user=projects/a1projectmanager
+[debug] [2026-01-06T17:53:06.513Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-06T17:53:06.513Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-06T17:53:06.517Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-06T17:53:06.517Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-06T17:53:06.532Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
+[debug] [2026-01-06T17:53:06.532Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
+[debug] [2026-01-06T17:53:06.961Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-06T17:53:06.964Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-06T17:53:06.965Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-06T17:53:06.966Z] > authorizing via signed-in user (rodri.mendoza.t@gmail.com)
+[debug] [2026-01-06T17:53:06.966Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.966Z] Checked if tokens are valid: true, expires at: 1767723072083
+[debug] [2026-01-06T17:53:06.966Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo [none]
+[debug] [2026-01-06T17:53:07.228Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo 200
+[debug] [2026-01-06T17:53:07.229Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/a1projectmanager/billingInfo {"name":"projects/a1projectmanager/billingInfo","projectId":"a1projectmanager","billingAccountName":"","billingEnabled":false}
+[debug] [2026-01-06T17:53:07.230Z] Object "/emulators" in "firebase.json" has unknown property: {"additionalProperty":"emulatorHub"}
+[debug] [2026-01-06T17:53:07.492Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
+[debug] [2026-01-06T17:53:07.493Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
+[debug] [2026-01-06T17:53:07.508Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com 403
+[debug] [2026-01-06T17:53:07.508Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseio.com [omitted]
+[debug] [2026-01-06T17:53:07.538Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-06T17:53:07.539Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-06T17:53:07.541Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-06T17:53:07.541Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-01-06T17:53:07.542Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-01-06T17:53:07.542Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-01-06T17:53:07.634Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-01-06T17:53:07.635Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/a1projectmanager/services/firebasedataconnect.googleapis.com [omitted]

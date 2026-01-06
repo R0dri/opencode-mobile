@@ -20,7 +20,7 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
   // Core state
   const [inputUrl, setInputUrl] = useState(initialUrl);
   const [baseUrl, setBaseUrl] = useState(null);
-  const [currentMode, setCurrentMode] = useState('build');
+  const [currentAgentMode, setCurrentAgentMode] = useState('build');
   const [autoConnectAttempted, setAutoConnectAttempted] = useState(false);
   const [shouldShowProjectSelector, setShouldShowProjectSelector] = useState(false);
 
@@ -41,8 +41,44 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
    const messaging = useMessageProcessing();
    const models = useModelManager(baseUrl, projects.selectedProject);
     const todos = useTodoManager(baseUrl, projects.selectedSession?.id, projects.selectedProject);
-   const notifications = useNotificationManager();
    const sessionStatus = useSessionStatus(projects.selectedSession);
+
+   const handleDeepLink = useCallback(async (deepLinkData) => {
+     console.debug('[DeepLink] Processing:', deepLinkData.type);
+     const { serverUrl, projectPath, sessionId } = deepLinkData;
+
+     if (!connection.isConnected && serverUrl) {
+       try {
+         await connect(serverUrl, { autoSelect: false });
+       } catch (error) {
+         console.error('[DeepLink] Connect failed:', error);
+         return;
+       }
+     }
+
+     if (projectPath && projects.projects) {
+       const project = projects.projects.find(p => p.path === projectPath);
+       if (project) {
+         await projects.selectProject(project);
+       }
+     }
+
+     if (sessionId && projects.projectSessions) {
+       const session = projects.projectSessions.find(s => s.id === sessionId);
+       if (session) {
+         projects.selectSession(session);
+         if (baseUrl) {
+           messaging.clearEvents();
+           messaging.loadMessages(baseUrl, session.id, projects.selectedProject);
+         }
+       }
+     }
+   }, [connection.isConnected, connect, projects, baseUrl, messaging]);
+
+   const notifications = useNotificationManager({
+     serverBaseUrl: baseUrl,
+     onDeepLink: handleDeepLink,
+   });
 
   // Debug: Log projects changes
   useEffect(() => {
@@ -187,7 +223,7 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
       }
 
       // Handle regular messages
-      const processedMessage = messaging.processMessage(message, currentMode);
+      const processedMessage = messaging.processMessage(message, currentAgentMode);
       messaging.addEvent(processedMessage);
     },
     projects.selectedSession
@@ -203,7 +239,7 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
   }, [connection, messaging, projects]);
 
   // Send message
-  const sendMessage = useCallback(async (messageText, mode = 'build') => {
+  const sendMessage = useCallback(async (messageText, agent = {name: 'build'}) => {
     if (!projects.selectedSession) {
       throw new Error('No session selected');
     }
@@ -218,7 +254,13 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
       throw new Error('Cannot send empty message');
     }
 
-    setCurrentMode(mode);
+    const agentName = typeof agent === 'string' ? agent : agent.name;
+    setCurrentAgentMode(agentName);
+
+    // Auto-select model if agent has default model
+    if (typeof agent === 'object' && agent.model) {
+      await models.selectModel(agent.model.providerID, agent.model.modelID);
+    }
 
     // Add sent message to UI immediately
     const sentMessageId = generateMessageId();
@@ -230,13 +272,13 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
       projectName: 'Me',
       icon: 'User',
       timestamp: new Date().toISOString(),
-      mode: mode,
+      mode: agentName,
       sessionId: projects.selectedSession?.id
     });
 
     try {
-      // Send to server
-      const response = await sendMessageToSession(messageText, mode, projects.selectedProject, models.selectedModel);
+      // Send to server asynchronously
+      const response = await sendMessageToSession(messageText, agentName, projects.selectedProject, models.selectedModel, true);
 
       // Update UI state
       todos.setExpanded(false);
@@ -250,7 +292,7 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
 
       throw error;
     }
-  }, [connection.isConnected, messaging, projects.selectedProject, models.selectedModel, todos, currentMode]);
+  }, [connection.isConnected, messaging, projects.selectedProject, models, todos, currentAgentMode]);
 
   // Clear error (placeholder)
   const clearError = useCallback(() => {
@@ -303,54 +345,62 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
     }
   }, [projects.selectedSession, baseUrl, messaging, todos, projects.selectedProject]);
 
-  // Return unified interface (backward compatible)
-  return {
-    // Connection state
-    events: messaging.events,
-    unclassifiedMessages: messaging.unclassifiedMessages,
-    groupedUnclassifiedMessages: messaging.groupedUnclassifiedMessages,
-    allMessages: messaging.allMessages,
-    groupedAllMessages: messaging.groupedAllMessages,
-    isConnected: connection.isConnected,
-    isConnecting: connection.isConnecting,
-    isServerReachable: connectionMgr.isServerReachable,
-    error: connection.error,
-    inputUrl,
-    setInputUrl,
+   // Clear debug messages
+   const clearDebugMessages = useCallback(() => {
+     messaging.clearEvents();
+   }, [messaging]);
 
-      // Projects & Sessions
-      projects: projects.projects,
-      projectSessions: projects.projectSessions,
-      sessionStatuses: projects.sessionStatuses,
-      selectedProject: projects.selectedProject,
-      selectedSession: projects.selectedSession,
-      sessionLoading: projects.sessionLoading,
-     isSessionBusy: sessionStatus.isThinking,
+   // Return unified interface (backward compatible)
+   return {
+      // Connection state
+      events: messaging.events,
+      unclassifiedMessages: messaging.unclassifiedMessages,
+      groupedUnclassifiedMessages: messaging.groupedUnclassifiedMessages,
+      allMessages: messaging.allMessages,
+      groupedAllMessages: messaging.groupedAllMessages,
+      isConnected: connection.isConnected,
+      isConnecting: connection.isConnecting,
+      isServerReachable: connectionMgr.isServerReachable,
+      error: connection.error,
+      inputUrl,
+      setInputUrl,
+      baseUrl,
 
-    // Models
-    providers: models.providers,
-    selectedModel: models.selectedModel,
-    modelsLoading: models.loading,
+       // Projects & Sessions
+       projects: projects.projects,
+       projectSessions: projects.projectSessions,
+       sessionStatuses: projects.sessionStatuses,
+       selectedProject: projects.selectedProject,
+       selectedSession: projects.selectedSession,
+       sessionLoading: projects.sessionLoading,
+      isSessionBusy: sessionStatus.isThinking,
 
-    // Todos
-    todos: todos.todos,
-    todoDrawerExpanded: todos.expanded,
-    setTodoDrawerExpanded: todos.setExpanded,
+     // Models
+     providers: models.providers,
+     selectedModel: models.selectedModel,
+     modelsLoading: models.loading,
 
-    // UI State
-    shouldShowProjectSelector,
+     // Todos
+     todos: todos.todos,
+     todoDrawerExpanded: todos.expanded,
+     setTodoDrawerExpanded: todos.setExpanded,
 
-    // Actions
-    connect,
-    disconnectFromEvents,
-    sendMessage,
-    clearError,
-    loadModels,
-    onModelSelect,
-    selectProject,
-    selectSession,
-    refreshSession,
-    createSession,
-    deleteSession: deleteSessionById
-  };
+     // UI State
+     shouldShowProjectSelector,
+
+     // Actions
+     connect,
+     disconnectFromEvents,
+     sendMessage,
+     clearError,
+     loadModels,
+     onModelSelect,
+     selectProject,
+     selectSession,
+     refreshSession,
+      createSession,
+      deleteSession: deleteSessionById,
+      clearDebugMessages,
+      sendTestNotification: notifications.sendTestNotification,
+   };
 };

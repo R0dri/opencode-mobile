@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../shared/components/ThemeProvider';
+import { useTheme } from '@/shared/components/ThemeProvider';
 import { createStyles } from './styles';
 
 const SectionHeader = ({ title, hasInlineNewSession, onCreateSession, editMode, onToggleEditMode }) => {

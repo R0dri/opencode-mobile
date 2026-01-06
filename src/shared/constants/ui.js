@@ -32,6 +32,12 @@ export const FONT_SIZES = {
   XXXL: 24
 };
 
+export const FONTS = {
+  MONO_REGULAR: 'IBMPlexMono-Regular',
+  MONO_MEDIUM: 'IBMPlexMono-Medium',
+  MONO_BOLD: 'IBMPlexMono-Bold',
+};
+
 export const BORDER_RADIUS = {
   SM: 4,
   MD: 8,

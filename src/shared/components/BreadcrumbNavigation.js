@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import useBreadcrumbNavigation from '../hooks/useBreadcrumbNavigation';
-import { formatBreadcrumbText } from '../utils/breadcrumbUtils';
+import useBreadcrumbNavigation from '@/shared/hooks/useBreadcrumbNavigation';
+import { formatBreadcrumbText } from '@/shared/utils/breadcrumbUtils';
 
 /**
  * BreadcrumbNavigation component - Static horizontal bar visualization for breadcrumbs

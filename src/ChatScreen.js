@@ -1,42 +1,43 @@
  import React, { useEffect, useState, useRef } from 'react';
- import { StyleSheet, View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Animated, useWindowDimensions, Keyboard } from 'react-native';
- import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Animated, useWindowDimensions, Keyboard } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
- import StatusBar from '@/components/layout/StatusBar';
- import { ConnectionStatusBar } from '@/features/connection/components';
- import { EventList } from '@/features/messaging/components';
- import { SessionMessageFilter } from '@/features/messaging/components';
- import { SessionDrawer, EdgeSwipeDetector } from '@/features/sessions/components';
- import { ProjectList } from '@/features/projects/components';
- import { SessionListModal } from '@/features/sessions/components';
- import { ConnectionInput } from '@/features/connection/components';
+import StatusBar from '@/components/layout/StatusBar';
+import SendIcon from '@/components/common/PaperPlaneIcon';
+import LogModal from '@/components/modals/LogModal';
+import { BreadcrumbNavigation } from '@/shared/components';
+import { BreadcrumbSlider } from '@/shared/components';
+import { ThinkingIndicator } from '@/shared/components/common';
+import { useTheme } from '@/shared/components/ThemeProvider';
+import { getProjectDisplayName } from '@/shared';
+import { useKeyboardState, useSidebarState } from '@/shared/hooks';
 
- import { getProjectDisplayName } from '@/shared';
- import { useKeyboardState, useSidebarState } from '@/shared/hooks';
- import { EmbeddedProjectSelector } from '@/features/projects/components';
- import { MessageDebugModal } from '@/features/messaging/components';
+import { ChatInputBar } from '@/features/connection/components';
+import { ConnectionModal } from '@/features/connection/components';
+import { ConnectionStatusBar } from '@/features/connection/components';
+import { ConnectionStatusIndicator } from '@/features/connection/components';
+import { ServerConnectionInfoBar } from '@/features/connection/components';
 
+import { EventList } from '@/features/messaging/components';
+import { MessageDebugModal } from '@/features/messaging/components';
+import { SessionMessageFilter } from '@/features/messaging/components';
 
- import SendIcon from '@/components/common/PaperPlaneIcon';
- import TodoStatusIcon from '@/features/todos/components/TodoStatusIcon';
- import { SessionBusyIndicator } from '@/features/sessions/components';
- import { ThinkingIndicator } from '@/features/sessions/components';
- import { ModelSelector } from '@/features/models/components';
- import { NotificationSettings } from '@/features/notifications/components';
- import { ProjectSelectionModal } from '@/features/projects/components';
+import { ModelSelector } from '@/features/models/components';
 
+import { NotificationSettings } from '@/features/notifications/components';
 
- import LogModal from '@/components/modals/LogModal';
- import { ConnectionModal } from '@/features/connection/components';
- import { BreadcrumbNavigation } from '@/shared/components';
- import { ConnectionStatusIndicator } from '@/features/connection/components';
- import { SessionDropdown } from '@/features/sessions/components';
- import { StatusBarActions } from '@/features/sessions/components';
- import { SessionStatusIndicator } from '@/features/sessions/components';
- import TodoDrawer from '@/features/todos/components/TodoDrawer';
- import { BreadcrumbSlider } from '@/shared/components';
-  import { ServerConnectionInfoBar } from '@/features/connection/components';
-   import { useTheme } from '@/shared/components/ThemeProvider';
+import { EmbeddedProjectSelector } from '@/features/projects/components';
+import { ProjectList } from '@/features/projects/components';
+import { ProjectSelectionModal } from '@/features/projects/components';
+
+import { SessionDrawer, EdgeSwipeDetector } from '@/features/sessions/components';
+import { SessionBusyIndicator } from '@/features/sessions/components';
+import { SessionDropdown } from '@/features/sessions/components';
+import { SessionListModal } from '@/features/sessions/components';
+import { StatusBarActions } from '@/features/sessions/components';
+
+import TodoDrawer from '@/features/todos/components/TodoDrawer';
+import TodoStatusIcon from '@/features/todos/components/TodoStatusIcon';
 
 
 
@@ -83,41 +84,43 @@
       }, [shouldShowProjectSelector]);
 
 
-     const {
-      events,
-      groupedUnclassifiedMessages,
-      groupedAllMessages,
-      isConnected,
-      isConnecting,
+      const {
+       events,
+       groupedUnclassifiedMessages,
+       groupedAllMessages,
+       isConnected,
+       isConnecting,
       isServerReachable,
       error,
       inputUrl,
       setInputUrl,
-        projects,
-        projectSessions,
-        sessionStatuses,
-        selectedProject,
-        selectedSession,
-        sessionLoading,
-      isSessionBusy,
-      todos,
-      providers,
-      selectedModel,
-      modelsLoading,
-      onModelSelect,
-      loadModels,
-      deleteSession,
-       connect,
-       disconnectFromEvents,
-      selectProject,
-      selectSession,
-      refreshSession,
-      createSession,
-      clearError,
-      sendMessage,
-      todoDrawerExpanded,
-      setTodoDrawerExpanded,
-     } = props;
+      baseUrl,
+         projects,
+         projectSessions,
+         sessionStatuses,
+         selectedProject,
+         selectedSession,
+         sessionLoading,
+       isSessionBusy,
+       todos,
+       providers,
+       selectedModel,
+       modelsLoading,
+       onModelSelect,
+       loadModels,
+       deleteSession,
+        connect,
+        disconnectFromEvents,
+       selectProject,
+       selectSession,
+       refreshSession,
+       createSession,
+       clearError,
+       sendMessage,
+       todoDrawerExpanded,
+       setTodoDrawerExpanded,
+       clearDebugMessages, // New function for clearing debug messages
+      } = props;
 
      // Handle session selection - close drawer on mobile after selection
      const handleSessionSelect = (session) => {
@@ -183,28 +186,28 @@
        alignItems: 'center',
        pointerEvents: 'none',
      },
-     errorContainer: {
-       flexDirection: 'row',
-       justifyContent: 'space-between',
-       alignItems: 'center',
-       backgroundColor: '#ffebee',
-       padding: 12,
-       marginBottom: 12,
-       borderRadius: 8,
-       borderLeftWidth: 4,
-       borderLeftColor: '#f44336',
-     },
-     errorText: {
-       color: '#d32f2f',
-       fontSize: 14,
-       flex: 1,
-     },
-     errorClose: {
-       color: '#d32f2f',
-       fontSize: 16,
-       fontWeight: 'bold',
-       marginLeft: 8,
-     },
+      errorContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: theme.colors.errorBackground,
+        padding: 12,
+        marginBottom: 12,
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: theme.colors.error,
+      },
+      errorText: {
+        color: theme.colors.errorText,
+        fontSize: 14,
+        flex: 1,
+      },
+      errorClose: {
+        color: theme.colors.errorText,
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 8,
+      },
 
      sessionHeader: {
        flexDirection: 'row',
@@ -384,7 +387,7 @@
                 </Animated.View>
               </View>
               <View style={styles.inputBar}>
-                <ConnectionInput
+                <ChatInputBar
                   inputUrl={inputUrl}
                   onUrlChange={setInputUrl}
                   onConnect={() => connect(inputUrl, { autoSelect: false })}
@@ -392,6 +395,8 @@
                   isConnecting={isConnecting}
                   isConnected={isConnected}
                   isServerReachable={isServerReachable}
+                  baseUrl={baseUrl}
+                  selectedProject={selectedProject}
                 />
               </View>
             </KeyboardAvoidingView>
@@ -412,25 +417,27 @@
           // Wide screen: Right sidebar
           debugVisible && (
             <View style={styles.debugSidebarContainer}>
-               <MessageDebugModal
-                 allMessages={groupedAllMessages}
-                 groupedUnclassifiedMessages={groupedUnclassifiedMessages}
-                 visible={debugVisible}
-                 onClose={() => {
-                   setDebugVisible(false);
-                   setDebugSidebarVisible(false);
-                 }}
-               />
+                <MessageDebugModal
+                  allMessages={groupedAllMessages}
+                  groupedUnclassifiedMessages={groupedUnclassifiedMessages}
+                  visible={debugVisible}
+                  onClose={() => {
+                    setDebugVisible(false);
+                    setDebugSidebarVisible(false);
+                  }}
+                  onClearMessages={clearDebugMessages}
+                />
             </View>
           )
         ) : (
           // Mobile: Bottom sheet modal
-           <MessageDebugModal
-             allMessages={groupedAllMessages}
-             groupedUnclassifiedMessages={groupedUnclassifiedMessages}
-             visible={debugVisible}
-             onClose={() => setDebugVisible(false)}
-           />
+            <MessageDebugModal
+              allMessages={groupedAllMessages}
+              groupedUnclassifiedMessages={groupedUnclassifiedMessages}
+              visible={debugVisible}
+              onClose={() => setDebugVisible(false)}
+              onClearMessages={clearDebugMessages}
+            />
         )}
        <LogModal
          visible={showLogs}

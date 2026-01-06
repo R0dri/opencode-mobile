@@ -1,32 +1,30 @@
 // AI model management and selection
-import { useState, useCallback } from 'react';
-import { apiClient } from '../../../services/api/client';
+import { useState, useCallback, useEffect } from 'react';
+import { apiClient } from '@/services/api/client';
 import { storage } from '@/shared/services/storage';
-import { STORAGE_KEYS } from '../../../shared/constants/storage';
+import { STORAGE_KEYS } from '@/shared/constants/storage';
 
 export const useModelManager = (baseUrl, selectedProject) => {
   const [providers, setProviders] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Load available models from server
   const loadModels = useCallback(async () => {
-    if (!baseUrl) return;
+    if (!baseUrl || !selectedProject) return;
 
     setLoading(true);
     try {
-      const response = await apiClient.get(`${baseUrl}/config/providers`);
+      const response = await apiClient.get(`${baseUrl}/config/providers`, {}, selectedProject);
       const data = await apiClient.parseJSON(response);
 
-      // Handle the /config/providers response format
+      console.log('[Models API] Loaded providers:', JSON.stringify(data, null, 2));
+
       setProviders(data.providers || []);
 
-      // Load last selected model and set it if available
       const lastModel = await storage.get(STORAGE_KEYS.LAST_SELECTED_MODEL);
       if (lastModel) {
         setSelectedModel(lastModel);
       } else if (data.default && Object.keys(data.default).length > 0) {
-        // Use server defaults if no saved preference
         const defaultProvider = Object.keys(data.default)[0];
         const defaultModel = data.default[defaultProvider];
         setSelectedModel({ providerId: defaultProvider, modelId: defaultModel });
@@ -37,7 +35,11 @@ export const useModelManager = (baseUrl, selectedProject) => {
     } finally {
       setLoading(false);
     }
-  }, [baseUrl]);
+  }, [baseUrl, selectedProject]);
+
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
 
   // Select a model and save preference
   const selectModel = useCallback(async (providerId, modelId) => {

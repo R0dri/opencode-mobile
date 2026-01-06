@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { formatStatusText, getStatusColor } from '../utils/connectionStatusUtils';
 import { useTheme } from '@/shared/components/ThemeProvider';
@@ -44,6 +44,31 @@ const ConnectionStatusBar = ({
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+
+  // Global keyboard shortcut for model selector
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handler = (e) => {
+        // Only trigger if not focused on input elements
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement?.tagName === 'INPUT' ||
+                             activeElement?.tagName === 'TEXTAREA';
+
+        if (e.shiftKey && e.key === 'Tab' && !isInputFocused) {
+          e.preventDefault();
+          setModelDropdownOpen(prev => !prev);
+          // Fetch models when opening
+          if (!modelDropdownOpen && onFetchModels) {
+            onFetchModels();
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handler);
+      return () => window.removeEventListener('keydown', handler);
+    }
+  }, [modelDropdownOpen, onFetchModels]);
 
   // Icon components with semantic colors
   const RefreshIcon = () => <Feather name="rotate-cw" size={18} color="#2196F3" />;
@@ -93,16 +118,18 @@ const ConnectionStatusBar = ({
             <View style={[styles.busyDot, { backgroundColor: theme.colors.warning }]} />
           )}
         </View>
-        <View style={styles.headerModelSelector}>
-          <ModelSelector
-            providers={providers}
-            selectedModel={selectedModel}
-            onModelSelect={onModelSelect}
-            loading={modelsLoading}
-            onFetchModels={onFetchModels}
-            compact={true}
-          />
-        </View>
+         <View style={styles.headerModelSelector}>
+           <ModelSelector
+             providers={providers}
+             selectedModel={selectedModel}
+             onModelSelect={onModelSelect}
+             loading={modelsLoading}
+             onFetchModels={onFetchModels}
+             compact={true}
+             isOpen={modelDropdownOpen}
+             onToggle={() => setModelDropdownOpen(prev => !prev)}
+           />
+         </View>
         <IconButton
           Icon={DebugIcon}
           onPress={onDebugPress}

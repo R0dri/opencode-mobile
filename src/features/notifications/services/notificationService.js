@@ -1,78 +1,80 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform, AppState } from 'react-native';
+import { storage } from '@/shared/services/storage';
+import { STORAGE_KEYS } from '@/shared/constants/storage';
 
-/**
- * Notification service for opencode mobile app
- */
 class NotificationService {
   constructor() {
     this.isInitialized = false;
   }
 
-  /**
-   * Initialize notification service
-   */
   async initialize() {
     if (!Device.isDevice) {
-      console.debug('Notifications not available on simulator');
+      console.debug('[Notifications] Not available on simulator');
       this.isInitialized = false;
       return;
+    }
+
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
     }
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+        },
+      });
       finalStatus = status;
     }
 
     if (finalStatus !== 'granted') {
-      console.debug('Notification permissions not granted');
+      console.debug('[Notifications] Permission not granted');
       this.isInitialized = false;
       return;
     }
 
-    // Configure notification handler for local notifications only
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
-        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
       }),
     });
 
     this.isInitialized = true;
-    console.debug('Notifications initialized for local use only');
+    console.debug('[Notifications] Initialized successfully');
   }
 
-  /**
-   * Schedule a local notification for new message
-   * @param {string} title - Notification title
-   * @param {string} body - Notification body
-   * @param {Object} data - Additional data
-   */
   async scheduleNotification(title, body, data = {}) {
     if (!this.isInitialized) {
-      console.debug('Notifications not initialized, skipping:', { title, body, data });
+      console.debug('[Notifications] Not initialized, skipping:', { title, body });
       return;
     }
 
-    // Check user preferences (if implemented)
     try {
-      const settings = await AsyncStorage.getItem('notificationSettings');
-      if (settings) {
-        const parsed = JSON.parse(settings);
-        if (!parsed.notificationsEnabled) {
-          return;
-        }
+      const settings = await storage.get(STORAGE_KEYS.NOTIFICATION_SETTINGS);
+      if (settings && !settings.notificationsEnabled) {
+        return;
       }
     } catch (error) {
-      console.error('Failed to check notification settings:', error);
+      console.error('[Notifications] Failed to check settings:', error);
     }
 
-    console.debug('Scheduling local notification:', { title, body, data });
+    console.debug('[Notifications] Scheduling:', { title, body });
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -80,24 +82,16 @@ class NotificationService {
         data,
         sound: 'default',
       },
-      trigger: null, // Show immediately
+      trigger: null,
     });
   }
 
-  /**
-   * Set current session for filtering notifications
-   * @param {Function} getter - Function to get current session
-   */
   setCurrentSessionGetter(getter) {
     this.getCurrentSession = getter;
   }
 
-  /**
-   * Check if app is in foreground
-   * @returns {boolean} - True if app is active
-   */
   isAppActive() {
-    return require('react-native').AppState.currentState === 'active';
+    return AppState.currentState === 'active';
   }
 }
 

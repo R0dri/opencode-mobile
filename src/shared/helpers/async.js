@@ -57,7 +57,7 @@ export const withTimeout = (promise, timeoutMs, timeoutMessage = 'Operation time
  */
 export const debounce = (func, wait) => {
   let timeout;
-  return function executedFunction(...args) {
+  return function debouncedFunction(...args) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
@@ -75,7 +75,7 @@ export const debounce = (func, wait) => {
  */
 export const throttle = (func, limit) => {
   let inThrottle;
-  return function executedFunction(...args) {
+  return function throttledFunction(...args) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;

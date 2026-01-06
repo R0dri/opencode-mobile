@@ -1,6 +1,6 @@
 // Model preference storage utilities
 import { storage } from '@/shared/services/storage';
-import { STORAGE_KEYS } from '../../../shared/constants/storage';
+import { STORAGE_KEYS } from '@/shared/constants/storage';
 
 /**
  * Save the last selected model to storage

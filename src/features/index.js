@@ -1,5 +1,6 @@
 // Feature modules - centralized exports
 export { useSSEConnection, useConnectionManager, useAppState } from './connection';
+export { useCommands } from './commands';
 export { useMessageProcessing, useEventManager } from './messaging';
 export { useProjectManager } from './projects';
 export { useModelManager } from './models';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '@/shared/components/ThemeProvider';
@@ -12,24 +12,33 @@ import { useTheme } from '@/shared/components/ThemeProvider';
  * @param {boolean} props.loading - Whether models are being loaded
  * @param {Function} props.onFetchModels - Callback to fetch models when dropdown opens
  */
-const ModelSelector = ({ providers = [], selectedModel, onModelSelect, loading = false, onFetchModels, compact = false }) => {
+const ModelSelector = ({ providers = [], selectedModel, onModelSelect, loading = false, onFetchModels, compact = false, isOpen, onToggle }) => {
   const theme = useTheme();
   const styles = getStyles(theme, compact);
-  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const dropdownVisible = isOpen !== undefined ? isOpen : false;
 
   const toggleDropdown = () => {
-    const willBeVisible = !dropdownVisible;
-    setDropdownVisible(willBeVisible);
+    if (onToggle) {
+      onToggle();
+      // Fetch models when opening the dropdown
+      if (!dropdownVisible && onFetchModels) {
+        onFetchModels();
+      }
+    }
+  };
 
-    // Fetch models when opening the dropdown
-    if (willBeVisible && onFetchModels) {
-      onFetchModels();
+  const closeDropdown = () => {
+    if (onToggle) {
+      // If externally controlled, call onToggle to close
+      if (dropdownVisible) {
+        onToggle();
+      }
     }
   };
 
   const handleModelSelect = (providerId, modelId) => {
     onModelSelect(providerId, modelId);
-    setDropdownVisible(false);
+    closeDropdown();
   };
 
   // Find the display name for the selected model
@@ -113,12 +122,12 @@ const ModelSelector = ({ providers = [], selectedModel, onModelSelect, loading =
         visible={dropdownVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setDropdownVisible(false)}
+        onRequestClose={closeDropdown}
       >
         <TouchableOpacity
           style={styles.dropdownOverlay}
           activeOpacity={1}
-          onPress={() => setDropdownVisible(false)}
+          onPress={closeDropdown}
         >
           <View style={styles.dropdownContainer}>
             <FlatList

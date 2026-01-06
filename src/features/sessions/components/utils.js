@@ -1,5 +1,5 @@
 // utils.js - Data processing utilities for session drawer
-import { getProjectDisplayName } from '../../../shared';
+import { getProjectDisplayName } from '@/shared';
 
 export const formatNaturalDate = (dateObj) => {
   const date = new Date(dateObj);

@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import useSessionStatus from '../hooks/useSessionStatus';
 import { formatStatusText, getStatusIcon, getThinkingAnimation } from '../utils/sessionStatusUtils';
 
 /**
  * SessionStatusIndicator component - Text/icon combo visualization for session status
  * @param {Object} props - Component props
+ * @param {boolean} props.isThinking - Whether the session is thinking
+ * @param {boolean} props.isBusy - Whether the session is busy
  */
-const SessionStatusIndicator = () => {
-  const { isThinking, isBusy } = useSessionStatus();
+const SessionStatusIndicator = React.memo(({ isThinking, isBusy }) => {
 
   return (
     <View style={styles.container}>
@@ -16,7 +16,9 @@ const SessionStatusIndicator = () => {
       <Text style={styles.text}>{formatStatusText(isThinking, isBusy)}</Text>
     </View>
   );
-};
+});
+
+SessionStatusIndicator.displayName = 'SessionStatusIndicator';
 
 const styles = StyleSheet.create({
   container: {

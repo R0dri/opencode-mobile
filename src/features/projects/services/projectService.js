@@ -54,7 +54,7 @@ export const fetchProjects = async (baseUrl, selectedProject = null) => {
  * @param {string} baseUrl - Base URL of the opencode server
  * @param {string} projectId - Project ID to filter sessions
  * @param {Object} selectedProject - Currently selected project (for headers)
- * @returns {Promise<Array<import('../../../../shared/types/opencode.types.js').Session>>} - Array of sessions for the project
+ * @returns {Promise<Array<import('@/shared/types/opencode.types.js').Session>>} - Array of sessions for the project
  */
 export const fetchSessionsForProject = async (baseUrl, projectId, selectedProject = null) => {
   try {
@@ -64,7 +64,7 @@ export const fetchSessionsForProject = async (baseUrl, projectId, selectedProjec
       }
     }, selectedProject);
 
-    /** @type {Array<import('../../../../shared/types/opencode.types.js').Session>} */
+    /** @type {Array<import('@/shared/types/opencode.types.js').Session>} */
     const projectSessions = await apiClient.parseJSON(response);
 
     return projectSessions;

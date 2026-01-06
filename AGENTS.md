@@ -2,7 +2,7 @@
 
 ## Overview
 
-OpenCode Mobile is a React Native application built with Expo that connects to Server-Sent Events (SSE) servers for real-time messaging and project management. The app follows a domain-driven architecture with feature modules, shared services, and organized component hierarchies.
+OpenCode Mobile is a React Native application built with Expo that connects to Server-Sent Events (SSE) servers for real-time messaging and project management. The app follows a refined domain-driven architecture with a three-tier structure: feature modules, shared components/services, and optimized performance patterns.
 
 ## Commands
 
@@ -31,40 +31,61 @@ OpenCode Mobile is a React Native application built with Expo that connects to S
 ## Code Style Guidelines
 
 ### Architecture
-- **Domain-driven design**: Code organized into `features/` with hooks/services/utils/types
-- **Feature modules**: Each domain (`connection/`, `messaging/`, `projects/`, etc.) contains complete functionality
-- **Service layer**: `services/` for external integrations (API, SSE, storage)
-- **Shared layer**: `shared/` for cross-cutting concerns (types, constants, helpers)
-- **Component organization**: Components grouped by type (`common/`, `layout/`, `modals/`, `selectors/`)
+- **Three-tier domain-driven design**:
+  - **Feature modules**: `features/` with consistent subfolders (components/, hooks/, services/, types/, utils/)
+  - **Shared components**: `components/common/` for reusable UI components (SessionDrawer, ThinkingIndicator)
+  - **Shared services**: `shared/` for cross-cutting concerns (hooks, constants, helpers, utilities)
+- **Component organization**: Hierarchical structure with barrel exports and performance optimizations
+- **Hook consolidation**: Shared hooks in `shared/hooks/` with domain-specific hooks in features
+- **Import standardization**: `@/` aliases for internal modules with relative paths minimized
 
 ### File Structure
 ```
 src/
+├── components/         # Component hierarchy
+│   ├── common/         # Shared reusable components
+│   │   ├── SessionDrawer/  # Relocated drawer component
+│   │   └── index.js        # Barrel exports
+│   ├── indicators/     # Status indicators
+│   ├── layout/         # Layout containers
+│   ├── lists/          # List components
+│   ├── modals/         # Modal dialogs
+│   └── selectors/      # Selection components
 ├── features/           # Domain-specific modules
 │   ├── [domain]/
 │   │   ├── components/ # Domain components
-│   │   ├── hooks/      # React hooks
-│   │   ├── services/   # External services
+│   │   ├── hooks/      # Domain-specific hooks (if any)
+│   │   ├── services/   # Domain services
 │   │   ├── types/      # Domain types
 │   │   └── utils/      # Domain utilities
-├── services/           # Cross-cutting services
-├── shared/             # Shared utilities
-├── screens/            # Screen components
-└── components/         # Organized by type
+├── services/           # Cross-cutting services (API, etc.)
+├── shared/             # Cross-cutting concerns
+│   ├── components/
+│   │   └── common/     # Reusable components (ThinkingIndicator)
+│   ├── constants/      # App-wide constants
+│   ├── helpers/        # Utility functions
+│   ├── hooks/          # Shared custom hooks
+│   ├── services/       # Shared services
+│   ├── types/          # Global types
+│   └── utils/          # Shared utilities
+├── ChatScreen.js       # Main screen component
+└── [other root files]
 ```
 
 ### Imports & Dependencies
-- **Module resolution**: Use `@/` alias for `src/` (configured in babel.config.js)
-- **Import grouping**: React/React Native imports first, then relative imports
-- **Relative imports only**: No absolute imports except `@/` alias
-- **Barrel exports**: Use `index.js` files for clean imports from directories
+- **Module resolution**: Use `@/` alias for `src/` (configured in babel.config.js and metro.config.js)
+- **Import standardization**: Prefer `@/` aliases over relative paths (`../../../shared/` → `@/shared/`)
+- **Import grouping**: React/React Native first, then external libraries, then internal modules
+- **Barrel exports**: Use `index.js` files for clean imports with named exports
+- **Performance**: Tree-shakable imports, avoid namespace imports where possible
 
 ### Naming Conventions
 - **Components**: PascalCase (`ConnectionModal.js`, `StatusBar.js`)
-- **Hooks**: camelCase with `use` prefix (`useConnectionStatus.js`, `useSSEOrchestrator.js`)
+- **Hooks**: camelCase with `use` prefix (`useConnectionStatus.js`, `useSessionDrawerAnimation.js`)
 - **Services/Utils**: camelCase (`connectionService.js`, `messageNormalizer.js`)
 - **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`, `DEFAULT_TIMEOUT`)
 - **Files**: Match exported function/class name, PascalCase for components
+- **Shared utilities**: Descriptive names (`useAsyncOperation`, `useFormValidation`)
 
 ### Formatting
 - **Indentation**: 2 spaces (no tabs)
@@ -73,6 +94,7 @@ src/
 - **Quotes**: Single quotes for strings, double quotes for JSX attributes
 - **Trailing commas**: Required in multi-line objects/arrays
 - **Spacing**: Single space around operators, no space in empty object destructuring
+- **Import organization**: Group by: React, external libraries, internal modules
 
 ### JavaScript/TypeScript
 - **No TypeScript**: Uses JSDoc comments for type documentation
@@ -82,36 +104,47 @@ src/
 
 ### React Patterns
 - **Functional components**: Always use function declarations, not arrow functions
-- **Hooks**: Custom hooks in feature directories, useState/useEffect patterns
+- **Hooks**: Shared hooks in `shared/hooks/`, domain hooks in feature directories
 - **Props destructuring**: Destructure props in function parameters
 - **Event handlers**: `handle` prefix for event handler functions
 - **State variables**: Descriptive names, no abbreviations
+- **Performance**: Use `React.memo` for pure components, `useMemo` for expensive computations
+- **Composition**: Prefer composition over inheritance, use render props where appropriate
 
 ### Error Handling
 - **Try/catch blocks**: Wrap async operations and external API calls
 - **Fallback UI**: Provide graceful degradation for error states
 - **Error logging**: Use `console.error()` for debugging, avoid `console.log()` in production
 - **User feedback**: Show user-friendly error messages, never crash the app
+- **Shared utilities**: Use `useAsyncOperation` for consistent error handling in async operations
 
 ### Styling
-- **StyleSheet API**: Use React Native's StyleSheet.create()
+- **Standardization**: Use `getStyles(theme)` pattern for theme-aware styling
+- **StyleSheet API**: React Native's StyleSheet.create() with theme integration
 - **Consistent naming**: camelCase for style properties
 - **Reusable styles**: Extract common styles to shared constants
+- **Theme integration**: All colors use theme values, no hardcoded colors
 - **Platform-specific**: Use Platform.select() for platform differences
 
 ## Development Workflow
 
 ### Adding New Features
-1. **Create feature module**: Add new directory under `src/features/`
-2. **Follow structure**: Implement hooks/services/utils/types/components
-3. **Update orchestrator**: Integrate with `useSSEOrchestrator.js` if needed
-4. **Add to barrel exports**: Update `index.js` files for clean imports
+1. **Create feature module**: Add new directory under `src/features/` with standard subfolders
+2. **Follow structure**: Implement components/, hooks/, services/, types/, utils/
+3. **Check shared**: Use existing shared components/hooks from `components/common/` and `shared/`
+4. **Update orchestrator**: Integrate with `useSSEOrchestrator.js` if needed
+5. **Add to barrel exports**: Update feature `index.js` for clean imports
+6. **Performance**: Apply `React.memo` and optimization patterns from start
 
 ### Component Creation
-1. **Check existing**: Search for similar components before creating new ones
-2. **Place appropriately**: Use `common/` for reusable, feature directories for specific
-3. **Follow patterns**: Use established naming and structure conventions
+1. **Check existing**: Search `components/common/` and `shared/components/` first
+2. **Placement strategy**:
+   - `components/common/`: Reusable across features (like SessionDrawer)
+   - `shared/components/common/`: Cross-domain reusable (like ThinkingIndicator)
+   - Feature `components/`: Domain-specific components
+3. **Follow patterns**: Use `getStyles(theme)`, `React.memo`, proper imports
 4. **Export properly**: Add to appropriate `index.js` barrel export
+5. **Testing**: Consider performance impact and memoization needs
 
 ### API Integration
 1. **Service layer**: Add API calls to `services/api/`
@@ -227,14 +260,41 @@ export class ApiClient {
 - **Network inspection**: Use React Native Debugger for network requests
 - **Performance profiling**: Use Flipper or React DevTools
 
+## Recent Improvements (Completed)
+
+### Structural Refactoring
+- **Component relocation**: Moved SessionDrawer to `components/common/`, ThinkingIndicator to `shared/components/common/`
+- **Hook consolidation**: Moved `useSessionDrawerAnimation` to `features/sessions/hooks/`, removed duplicate hooks
+- **Feature standardization**: Added consistent subfolders (types/, utils/, services/) across all features
+- **Import optimization**: Standardized `@/` alias usage, reduced relative path complexity
+
+### Performance Optimizations
+- **Component memoization**: Added `React.memo` to key components (SessionBusyIndicator, SessionStatusIndicator, SkeletonItem)
+- **Style optimization**: Implemented `useMemo` for expensive style computations
+- **List optimization**: Enhanced FlatList with performance props (`removeClippedSubviews`, etc.)
+- **Hook optimization**: Added `useCallback` for stable function references
+
+### Code Quality Improvements
+- **Styling standardization**: Enforced `getStyles(theme)` pattern with theme integration
+- **Shared utilities**: Added `useAsyncOperation` and `useFormValidation` hooks
+- **Import robustness**: Fixed all module resolution issues and barrel export inconsistencies
+- **Error handling**: Improved async operation error handling patterns
+
+### Latest Structural Fixes (2025-01-03)
+- **Component relocation fixes**: Confirmed `ThinkingIndicator` properly located in `shared/components/common/`, updated all imports
+- **Hook relocation**: Moved `useSessionDrawerAnimation` from `shared/hooks/` to `features/sessions/hooks/` for domain consistency
+- **Hook file organization**: Moved `hooks.js` from `features/sessions/components/` to `features/sessions/hooks/` subfolder
+- **Subfolder standardization**: Added missing `types/` subfolders to `features/models/` and `features/notifications/`, added missing `utils/` to `features/todos/`
+- **Export cleanup**: Removed broken exports and maintained barrel export consistency across all features
+
 ## Future Improvements
 
 ### Planned Additions
-- **ESLint configuration**: Add code linting rules
-- **Prettier configuration**: Add code formatting
-- **Testing framework**: Implement comprehensive test suite
-- **TypeScript migration**: Consider migrating to TypeScript
-- **Component library**: Standardize design system components
+- **ESLint configuration**: Add code linting rules with import alias enforcement
+- **Prettier configuration**: Configure for consistent formatting
+- **Testing framework**: Implement comprehensive test suite for optimized components
+- **TypeScript migration**: Consider migrating to TypeScript with existing patterns
+- **Component library**: Expand design system with standardized components
 
 This guide should be updated as the codebase evolves and new patterns emerge.</content>
 <parameter name="filePath">/Users/rodri/Projects/opencode-mobile/opencode-mobile/AGENTS.md

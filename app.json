@@ -4,11 +4,11 @@
     "slug": "opencode-mobile",
     "version": "0.1.0",
     "orientation": "default",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/opencode-icon.png",
     "userInterfaceStyle": "system",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/opencode-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -16,12 +16,17 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.doza62.opencodemobile",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
       "package": "com.doza62.opencodemobile",
-      "permissions": []
+      "permissions": [],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/opencode-adaptive-icon.png",
+        "backgroundColor": "#000000"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,7 +44,15 @@
     },
     "platforms": ["ios", "web", "android"],
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/opencode-icon.png",
+          "color": "#000000",
+          "defaultChannel": "default"
+        }
+      ]
     ]
   }
 }

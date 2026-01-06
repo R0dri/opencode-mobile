@@ -16,7 +16,7 @@ import { logger } from '@/shared';
 
 
 // In-memory session storage (can be expanded to persistent storage later)
-/** @type {import('../../../../shared/types/opencode.types.js').Session|null} */
+/** @type {import('@/shared/types/opencode.types.js').Session|null} */
 let currentSession = null;
 /** @type {string|null} */
 let baseUrl = null;
@@ -25,7 +25,7 @@ let baseUrl = null;
  * Create a new chat session
  * @param {string} serverBaseUrl - Base URL of the opencode server
  * @param {Object} selectedProject - Currently selected project
- * @returns {Promise<import('../../../../shared/types/opencode.types.js').Session>} - Session object
+ * @returns {Promise<import('@/shared/types/opencode.types.js').Session>} - Session object
  */
 export const createSession = async (serverBaseUrl, selectedProject = null) => {
   try {
@@ -35,7 +35,7 @@ export const createSession = async (serverBaseUrl, selectedProject = null) => {
       }
     }, selectedProject);
 
-    /** @type {import('../../../../shared/types/opencode.types.js').Session} */
+    /** @type {import('@/shared/types/opencode.types.js').Session} */
     const session = await apiClient.parseJSON(response);
 
     if (!session.id) {
@@ -54,7 +54,7 @@ export const createSession = async (serverBaseUrl, selectedProject = null) => {
 
 /**
  * Get the current active session
- * @returns {import('../../../../shared/types/opencode.types.js').Session|null} - Current session or null if no session
+ * @returns {import('@/shared/types/opencode.types.js').Session|null} - Current session or null if no session
  */
 export const getCurrentSession = () => {
   return currentSession;
@@ -78,7 +78,7 @@ export const hasActiveSession = () => {
 
 /**
  * Set an existing session as the current session
- * @param {import('../../../../shared/types/opencode.types.js').Session} session - Session to set as current
+ * @param {import('@/shared/types/opencode.types.js').Session} session - Session to set as current
  * @param {string} serverBaseUrl - Base URL of the server
  */
 export const setCurrentSession = (session, serverBaseUrl) => {
@@ -109,9 +109,11 @@ export const getSessionBaseUrl = () => {
  * @param {string} messageText - The message text to send
  * @param {string} mode - Message mode ('build' or 'plan')
  * @param {Object} selectedProject - Currently selected project
- * @returns {Promise<import('../../../../shared/types/opencode.types.js').SessionMessageResponse>} - Server response
+ * @param {Object} selectedModel - Selected model info
+ * @param {boolean} async - Whether to send asynchronously (default: false)
+ * @returns {Promise<import('@/shared/types/opencode.types.js').SessionMessageResponse|boolean>} - Server response for sync, boolean for async
  */
-export const sendMessageToSession = async (messageText, mode = 'build', selectedProject = null, selectedModel = null) => {
+export const sendMessageToSession = async (messageText, mode = 'build', selectedProject = null, selectedModel = null, async = false) => {
   if (!currentSession || !baseUrl) {
     throw new Error('No active session. Please connect first.');
   }
@@ -129,9 +131,10 @@ export const sendMessageToSession = async (messageText, mode = 'build', selected
     throw new Error(`Invalid session ID: ${currentSession.id}`);
   }
 
-  const messageUrl = `${baseUrl}/session/${currentSession.id}/message`;
+   const endpoint = async ? 'prompt_async' : 'message';
+   const messageUrl = `${baseUrl}/session/${currentSession.id}/${endpoint}`;
 
-  /** @type {import('../../../../shared/types/opencode.types.js').SessionMessageRequest} */
+  /** @type {import('@/shared/types/opencode.types.js').SessionMessageRequest} */
    const messageBody = {
      agent: mode,
      parts: [{ type: 'text', text: messageText }]
@@ -145,27 +148,32 @@ export const sendMessageToSession = async (messageText, mode = 'build', selected
       };
     }
 
-    logger.emoji('📤', 'Sending message with context:', {
-      sessionId: currentSession.id,
-      projectPath: selectedProject?.worktree || selectedProject?.directory,
-      messageUrl,
-      messageBody,
-      selectedModel: selectedModel ? `${selectedModel.providerId}/${selectedModel.modelId}` : 'none'
-    });
+     logger.emoji('📤', `Sending ${async ? 'async' : 'sync'} message with context:`, {
+       sessionId: currentSession.id,
+       projectPath: selectedProject?.worktree || selectedProject?.directory,
+       messageUrl,
+       messageBody,
+       selectedModel: selectedModel ? `${selectedModel.providerId}/${selectedModel.modelId}` : 'none'
+     });
 
+   try {
+     const response = await apiClient.post(messageUrl, messageBody, {}, selectedProject);
 
-
-  try {
-    const response = await apiClient.post(messageUrl, messageBody, {}, selectedProject);
-
-    /** @type {import('../../../../shared/types/opencode.types.js').SessionMessageResponse} */
-    const data = await apiClient.parseJSON(response);
-    logger.emoji('✅', 'Message sent successfully', data);
-    return data;
-  } catch (error) {
-    logger.error('Message send failed', error);
-    throw error;
-  }
+     if (async) {
+       // Async endpoint returns 204 No Content, no JSON to parse
+       logger.emoji('✅', 'Async message sent successfully');
+       return true;
+     } else {
+       // Sync endpoint returns message data
+       /** @type {import('@/shared/types/opencode.types.js').SessionMessageResponse} */
+       const data = await apiClient.parseJSON(response);
+       logger.emoji('✅', 'Message sent successfully', data);
+       return data;
+     }
+   } catch (error) {
+     logger.error('Message send failed', error);
+     throw error;
+   }
 };
 
 /**

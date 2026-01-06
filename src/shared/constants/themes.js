@@ -1,4 +1,4 @@
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from './ui';
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS, FONTS } from './ui';
 
 // Light theme colors
 const lightColors = {
@@ -78,16 +78,20 @@ const darkColors = {
 
 export const lightTheme = {
   colors: lightColors,
+  isDark: false,
   spacing: SPACING,
   fontSizes: FONT_SIZES,
+  fonts: FONTS,
   borderRadius: BORDER_RADIUS,
   shadows: SHADOWS,
 };
 
 export const darkTheme = {
   colors: darkColors,
+  isDark: true,
   spacing: SPACING,
   fontSizes: FONT_SIZES,
+  fonts: FONTS,
   borderRadius: BORDER_RADIUS,
   shadows: SHADOWS,
 };

@@ -1,26 +1,29 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import useSessionStatus from '../hooks/useSessionStatus';
+import { useTheme } from '@/shared/components/ThemeProvider';
 import { formatStatusText } from '../utils/sessionStatusUtils';
 
 /**
  * SessionBusyIndicator component - Loading overlay visualization for busy state
  * @param {Object} props - Component props
+ * @param {boolean} props.isBusy - Whether the session is busy
  */
-const SessionBusyIndicator = () => {
-  const { isBusy } = useSessionStatus();
+const SessionBusyIndicator = React.memo(({ isBusy }) => {
+  const theme = useTheme();
 
   if (!isBusy) return null;
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.container}>
-        <Text style={styles.text}>{formatStatusText(false, true)}</Text>
-        <View style={styles.loader} />
+      <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.text, { color: theme.colors.textPrimary }]}>{formatStatusText(false, true)}</Text>
+        <View style={[styles.loader, { borderColor: theme.colors.accentPrimary, borderTopColor: 'transparent' }]} />
       </View>
     </View>
   );
-};
+});
+
+SessionBusyIndicator.displayName = 'SessionBusyIndicator';
 
 const styles = StyleSheet.create({
   overlay: {
@@ -30,7 +33,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    backgroundColor: 'white',
     padding: 20,
     borderRadius: 8,
     alignItems: 'center',
@@ -43,8 +45,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderWidth: 3,
-    borderColor: '#007bff',
-    borderTopColor: 'transparent',
     borderRadius: 15,
   },
 });
