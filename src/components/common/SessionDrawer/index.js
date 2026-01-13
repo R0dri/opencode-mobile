@@ -13,7 +13,7 @@ import SessionDrawerErrorBoundary from './SessionDrawerErrorBoundary';
  * @param {SessionDrawerProps} props - Component props
  * @returns {JSX.Element|null} Appropriate drawer component based on mode
  */
-const SessionDrawer = (props) => {
+const SessionDrawer = props => {
   const {
     visible = false,
     isPersistent = false,
@@ -28,6 +28,11 @@ const SessionDrawer = (props) => {
     deleteSession,
     onClose,
     createSession,
+    onToggleInfoBar,
+    onDebugPress,
+    showMeta,
+    onToggleMeta,
+    refreshSessions = null,
   } = props;
 
   // Render persistent sidebar for desktop/tablet
@@ -45,6 +50,11 @@ const SessionDrawer = (props) => {
         deleteSession={deleteSession}
         onClose={onClose}
         createSession={createSession}
+        onToggleInfoBar={onToggleInfoBar}
+        onDebugPress={onDebugPress}
+        showMeta={showMeta}
+        onToggleMeta={onToggleMeta}
+        refreshSessions={refreshSessions}
       />
     );
   }
@@ -65,6 +75,7 @@ const SessionDrawer = (props) => {
         deleteSession={deleteSession}
         onClose={onClose}
         createSession={createSession}
+        refreshSessions={refreshSessions}
       />
     );
   }

@@ -38,10 +38,12 @@ export const createDrawerStyles = (theme, insets, isPersistent) => ({
     left: 0,
     top: insets.top,
     bottom: 0,
-    width: isPersistent ? 320 : '80%',        // CSS percentage for modal, fixed for persistent
-    maxWidth: isPersistent ? 320 : 360,       // Prevent overly wide drawers
-    minWidth: isPersistent ? 320 : 280,       // Ensure usable width on small screens
-    backgroundColor: theme.colors.surface,
+    width: isPersistent ? 320 : '80%', // CSS percentage for modal, fixed for persistent
+    maxWidth: isPersistent ? 320 : 360, // Prevent overly wide drawers
+    minWidth: isPersistent ? 320 : 280, // Ensure usable width on small screens
+    backgroundColor: theme.colors.glassSurface || theme.colors.surface,
+    borderRightWidth: 1,
+    borderRightColor: theme.colors.glassBorder || 'transparent',
     shadowColor: theme.colors.shadowColor,
     shadowOffset: { width: 2, height: 0 },
     shadowOpacity: isPersistent ? 0.1 : 0.25,
@@ -55,22 +57,22 @@ export const createDrawerStyles = (theme, insets, isPersistent) => ({
  * @param {Object} theme - Theme object with colors
  * @returns {Object} Header style object
  */
-export const createHeaderStyles = (theme) => ({
+export const createHeaderStyles = theme => ({
   drawerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
+    borderBottomColor: theme.colors.glassBorder || theme.colors.border,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.glassBorder || theme.colors.border,
   },
   projectTitle: {
     fontSize: 14,
@@ -84,11 +86,11 @@ export const createHeaderStyles = (theme) => ({
  * @param {Object} theme - Theme object with colors
  * @returns {Object} Session item style object
  */
-export const createSessionStyles = (theme) => ({
+export const createSessionStyles = theme => ({
   sessionItem: {
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
-    backgroundColor: theme.colors.surface,
+    borderBottomColor: theme.colors.glassBorder || theme.colors.borderLight,
+    backgroundColor: 'transparent',
   },
   sessionTouchable: {
     flex: 1,
@@ -98,7 +100,7 @@ export const createSessionStyles = (theme) => ({
     alignItems: 'center',
   },
   activeSessionItem: {
-    backgroundColor: theme.colors.surfaceSecondary,
+    backgroundColor: theme.colors.glassHighlight || theme.colors.surfaceSecondary,
   },
   activeSessionTitle: {
     color: theme.colors.accent,
@@ -126,7 +128,7 @@ export const createSessionStyles = (theme) => ({
  * @param {Object} theme - Theme object with colors
  * @returns {Object} Control style object
  */
-export const createControlStyles = (theme) => ({
+export const createControlStyles = theme => ({
   closeButton: {
     padding: 8,
   },

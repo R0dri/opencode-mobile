@@ -13,11 +13,12 @@ export const STORAGE_DEFAULTS = {
   NOTIFICATION_SETTINGS: {
     notificationsEnabled: true,
     soundEnabled: true,
-    vibrationEnabled: true
+    vibrationEnabled: true,
   },
   USER_PREFERENCES: {
     theme: 'light',
     language: 'en',
-    autoConnect: true
-  }
+    autoConnect: true,
+    showMeta: true,
+  },
 };

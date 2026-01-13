@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Modal, Alert, StyleSheet } from 'react-native';
 import { useTheme } from '@/shared/components/ThemeProvider';
 
@@ -19,10 +19,10 @@ import DebugContent from './debug/DebugContent';
  * @param {Object} allMessages - All messages grouped by category
  * @returns {Object} Messages grouped by messageId
  */
-const groupMessagesByMessageId = (allMessages) => {
+const groupMessagesByMessageId = allMessages => {
   const groups = {};
 
-  const extractMessages = (obj) => {
+  const extractMessages = obj => {
     if (!obj || typeof obj !== 'object') return [];
     return Object.values(obj).flat();
   };
@@ -32,10 +32,11 @@ const groupMessagesByMessageId = (allMessages) => {
   const all = [...classifiedMessages, ...unclassifiedMessages];
 
   all.forEach(msg => {
-    const msgId = msg.messageId ||
-                  msg.rawData?.payload?.properties?.part?.messageID ||
-                  msg.rawData?.payload?.properties?.info?.id ||
-                  'unknown';
+    const msgId =
+      msg.messageId ||
+      msg.rawData?.payload?.properties?.part?.messageID ||
+      msg.rawData?.payload?.properties?.info?.id ||
+      'unknown';
 
     if (!groups[msgId]) {
       groups[msgId] = [];
@@ -43,7 +44,7 @@ const groupMessagesByMessageId = (allMessages) => {
     groups[msgId].push({
       ...msg,
       eventType: msg.payloadType || msg.type,
-      timestamp: msg.timestamp || msg.rawData?.payload?.properties?.part?.time?.start || Date.now()
+      timestamp: msg.timestamp || msg.rawData?.payload?.properties?.part?.time?.start || Date.now(),
     });
   });
 
@@ -81,13 +82,10 @@ const MessageDebugModal = ({
   const { copyToClipboard } = useClipboard();
   const { activeTab, setActiveTab } = useDebugTabs();
   const { expandedGroups, toggleGroup, resetState } = useDebugState();
-  const {
-    drawerHeight,
-    isResizing,
-    isWideScreen,
-    onGestureEvent,
-    onHandlerStateChange
-  } = useResizableDrawer();
+  const { drawerHeight, isResizing, isWideScreen, onGestureEvent, onHandlerStateChange } =
+    useResizableDrawer();
+
+  const [showMetaHeaders, setShowMetaHeaders] = useState(true);
 
   // Map props to expected variables
   const groupedMessages = allMessages;
@@ -115,9 +113,9 @@ const MessageDebugModal = ({
             resetState();
             setActiveTab('classified');
             Alert.alert('Cleared', 'All debug messages have been cleared.');
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   }, [onClearMessages, resetState, setActiveTab]);
 
@@ -134,7 +132,8 @@ const MessageDebugModal = ({
           types: Object.keys(unclassifiedMessages || {}).length,
           total: stats.totalUnclassifiedMessages,
         },
-        messageIdGroups: Object.keys(groupedByMessageId || {}).filter(k => k.startsWith('msg_')).length,
+        messageIdGroups: Object.keys(groupedByMessageId || {}).filter(k => k.startsWith('msg_'))
+          .length,
       },
       groupedMessages,
       unclassifiedMessages,
@@ -149,10 +148,7 @@ const MessageDebugModal = ({
     // Wide screen: Right sidebar
     return (
       <View style={[styles.rightSidebar, { height: drawerHeight }]}>
-        <GripHandle
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-        />
+        <GripHandle onGestureEvent={onGestureEvent} onHandlerStateChange={onHandlerStateChange} />
 
         <DebugHeader
           onClose={onClose}
@@ -163,6 +159,8 @@ const MessageDebugModal = ({
           onClearMessages={onClearMessages ? handleClearMessages : null}
           groupedMessages={groupedMessages}
           unclassifiedMessages={unclassifiedMessages}
+          showMetaHeaders={showMetaHeaders}
+          onToggleMetaHeaders={setShowMetaHeaders}
         />
 
         <DebugContent
@@ -173,18 +171,14 @@ const MessageDebugModal = ({
           expandedGroups={expandedGroups}
           onToggleGroup={toggleGroup}
           onCopyMessage={copyToClipboard}
+          showMetaHeaders={showMetaHeaders}
         />
       </View>
     );
   } else {
     // Mobile: Bottom sheet modal
     return (
-      <Modal
-        visible={visible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={onClose}
-      >
+      <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
         <View style={styles.overlay}>
           <View style={[styles.container, { height: drawerHeight }]}>
             <GripHandle
@@ -201,6 +195,8 @@ const MessageDebugModal = ({
               onClearMessages={onClearMessages ? handleClearMessages : null}
               groupedMessages={groupedMessages}
               unclassifiedMessages={unclassifiedMessages}
+              showMetaHeaders={showMetaHeaders}
+              onToggleMetaHeaders={setShowMetaHeaders}
             />
 
             <DebugContent
@@ -211,6 +207,7 @@ const MessageDebugModal = ({
               expandedGroups={expandedGroups}
               onToggleGroup={toggleGroup}
               onCopyMessage={copyToClipboard}
+              showMetaHeaders={showMetaHeaders}
             />
           </View>
         </View>
@@ -219,32 +216,33 @@ const MessageDebugModal = ({
   }
 };
 
-const getStyles = (theme) => StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  container: {
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  rightSidebar: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 320,
-    backgroundColor: theme.colors.background,
-    borderLeftWidth: 1,
-    borderLeftColor: theme.colors.border,
-    shadowColor: theme.colors.shadowColor,
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-});
+const getStyles = theme =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    container: {
+      backgroundColor: theme.colors.background,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+    },
+    rightSidebar: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: 320,
+      backgroundColor: theme.colors.background,
+      borderLeftWidth: 1,
+      borderLeftColor: theme.colors.border,
+      shadowColor: theme.colors.shadowColor,
+      shadowOffset: { width: -2, height: 0 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+  });
 
 export default MessageDebugModal;

@@ -16,7 +16,7 @@ export const classifyMessage = (item, currentMode = 'build') => {
     return createFallbackMessage(item);
   }
 
-  const payloadType = item.payload?.type || 'unknown';
+  const payloadType = item.payloadType || item.payload?.type || 'unknown';
   const summaryBody = item.payload?.properties?.info?.summary?.body;
 
   // Fix session ID extraction - check multiple possible locations
@@ -107,7 +107,8 @@ export const classifyMessage = (item, currentMode = 'build') => {
 
       // Classify based on role - check both preprocessed (item.role) and raw (payload) formats
       const role = item.payload?.properties?.info?.role || item.role || null;
-      const messageType = role === 'user' ? 'sent' : 'loaded_message';
+      // Preserve type from preprocessed messages (reasoning/text), don't override
+      const messageType = item.type || (role === 'user' ? 'sent' : 'loaded_message');
 
       return {
         type: messageType,
@@ -287,7 +288,8 @@ export const classifyMessage = (item, currentMode = 'build') => {
       const textContent = textParts.map(part => part.text || '').join('\n');
       // Check both preprocessed (item.role) and raw (payload) formats
       const role = item.info?.role || item.role || null;
-      const messageType = role === 'user' ? 'sent' : 'loaded_message';
+      // Preserve type from preprocessed messages (reasoning/text), don't override
+      const messageType = item.type || (role === 'user' ? 'sent' : 'loaded_message');
 
       return {
         type: messageType,

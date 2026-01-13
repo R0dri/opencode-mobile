@@ -37,7 +37,11 @@ class PushTokenService {
 
     this.token = await this.getExpoPushToken();
     if (this.token) {
-      await this.registerWithServer();
+      try {
+        await this.registerWithServer();
+      } catch (error) {
+        pushTokenLogger.warn('Push token registration failed', { error: error.message });
+      }
       this.setupRefreshListener();
     }
 
@@ -123,7 +127,7 @@ class PushTokenService {
       });
 
       if (!response.ok) {
-        pushTokenLogger.error('Server registration failed', { status: response.status });
+        pushTokenLogger.warn('Server registration failed', { status: response.status });
         return false;
       }
 
@@ -132,11 +136,11 @@ class PushTokenService {
         pushTokenLogger.debug('Successfully registered with server');
         return true;
       } else {
-        pushTokenLogger.error('Server returned unexpected response', result);
+        pushTokenLogger.warn('Server returned unexpected response', result);
         return false;
       }
     } catch (error) {
-      pushTokenLogger.error('Server registration error', error);
+      pushTokenLogger.warn('Server registration error', { error: error.message });
       return false;
     }
   }
@@ -148,7 +152,11 @@ class PushTokenService {
       pushTokenLogger.debug('Push token refreshed');
       this.token = data;
       await storage.set(STORAGE_KEYS.PUSH_TOKEN, data);
-      await this.registerWithServer();
+      try {
+        await this.registerWithServer();
+      } catch (error) {
+        pushTokenLogger.warn('Push token re-registration failed', { error: error.message });
+      }
     });
   }
 

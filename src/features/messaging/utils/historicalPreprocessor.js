@@ -13,6 +13,9 @@
  * }
  */
 import { logger } from '@/shared/services/logger';
+import { apiClient } from '@/shared/services/api/client';
+import { classifyMessage, groupUnclassifiedMessages, groupAllMessages } from './messageClassifier';
+import { generateMessageId } from './messageIdGenerator';
 
 const historicalLogger = logger.tag('HistoricalPreprocessor');
 
@@ -63,7 +66,10 @@ export const preprocessHistoricalMessage = (rawMessage, options = {}) => {
     infoRole: info.role,
     rawRole: rawMessage.role,
     extractedRole,
-    payloadType: rawMessage.type,
+    rawType: rawMessage.type,
+    infoType: info.type,
+    propsType: rawMessage.properties?.type,
+    keys: Object.keys(rawMessage).slice(0, 20).join(', '),
     hasParts: parts.length > 0,
   });
 
@@ -96,7 +102,7 @@ export const preprocessHistoricalMessage = (rawMessage, options = {}) => {
     source: 'historical',
     messageId,
     sessionId: extractedSessionId,
-    payloadType: rawMessage.type || 'message.loaded',
+    payloadType: rawMessage.type,
     timestamp: info.created ? new Date(info.created).getTime() : Date.now(),
 
     role: extractedRole,
@@ -286,4 +292,163 @@ export const groupHistoricalMessages = (messages, groupBy = 'sessionId') => {
   });
 
   return groups;
+};
+
+/**
+ * Load historical messages from API and return fully classified events
+ * Consolidates API call, preprocessing, and classification into single operation
+ *
+ * @param {Object} params - Parameters
+ * @param {string} params.baseUrl - Server base URL
+ * @param {string} params.sessionId - Session ID
+ * @param {Object} params.selectedProject - Selected project (optional)
+ * @param {number} params.limit - Message limit (default: 20)
+ * @param {string} params.before - Pagination token (optional)
+ * @returns {Promise<Object>} - Classified events with metadata
+ */
+export const loadHistoricalMessages = async ({
+  baseUrl,
+  sessionId,
+  selectedProject = null,
+  limit = 20,
+  before = null,
+}) => {
+  historicalLogger.debug('loadHistoricalMessages ENTRY', {
+    baseUrl,
+    sessionId,
+    hasProject: !!selectedProject,
+    limit,
+    before,
+  });
+
+  if (!baseUrl || !sessionId) {
+    historicalLogger.warn('loadHistoricalMessages called without baseUrl or sessionId');
+    return {
+      events: [],
+      unclassifiedMessages: [],
+      groupedUnclassifiedMessages: {},
+      groupedAllMessages: {},
+    };
+  }
+
+  try {
+    historicalLogger.debug('Loading historical messages', { sessionId, limit, before });
+
+    // Build URL
+    let url = `${baseUrl}/session/${sessionId}/message?limit=${limit}`;
+    if (before) {
+      url += `&before=${before}`;
+    }
+
+    // Make API call
+    const response = await apiClient.get(
+      url,
+      {
+        headers: { Accept: 'application/json' },
+      },
+      selectedProject,
+    );
+
+    const data = await apiClient.parseJSON(response);
+
+    if (!data || !Array.isArray(data)) {
+      historicalLogger.warn('API response is not an array', { data });
+      return {
+        events: [],
+        unclassifiedMessages: [],
+        groupedUnclassifiedMessages: {},
+        groupedAllMessages: {},
+      };
+    }
+
+    historicalLogger.debug('API response received', { count: data.length });
+
+    // Preprocess all messages
+    const projectName = selectedProject?.name || selectedProject?.path || null;
+    const normalizedMessages = preprocessHistoricalMessages(data, {
+      sessionId,
+      projectName,
+    });
+
+    // Classify all messages
+    const seenMessageIds = new Set();
+    const events = [];
+    const unclassifiedMessages = [];
+    const allMessages = [];
+
+    normalizedMessages.forEach(item => {
+      // Bridge: new preprocessor uses 'text', legacy expects 'message'
+      const messageForClassification = {
+        ...item,
+        message: item.text || item.message,
+      };
+
+      const classified = classifyMessage(messageForClassification);
+
+      if (!classified) {
+        return;
+      }
+
+      // Set session ID if not present
+      if (!classified.sessionId) {
+        classified.sessionId = sessionId;
+      }
+
+      // Set project name if not present
+      if (selectedProject && !classified.projectName) {
+        classified.projectName = selectedProject.name || selectedProject.path || null;
+      }
+
+      // Set ID if not present
+      if (!classified.id) {
+        classified.id = classified.messageId || generateMessageId();
+      }
+
+      // Bridge: preserve text from preprocessor
+      if (item.text && !classified.message) {
+        classified.message = item.text;
+      }
+
+      // Bridge: preserve reasoning from preprocessor
+      if (item.reasoning) {
+        classified.reasoning = item.reasoning;
+      }
+
+      // Track seen message IDs to avoid duplicates
+      if (classified.messageId) {
+        if (seenMessageIds.has(classified.messageId)) {
+          historicalLogger.debug('Skipping duplicate message', { messageId: classified.messageId });
+          return;
+        }
+        seenMessageIds.add(classified.messageId);
+      }
+
+      // Categorize messages
+      if (classified.category === 'unclassified') {
+        unclassifiedMessages.push(classified);
+      }
+
+      allMessages.push(classified);
+      events.push(classified);
+    });
+
+    historicalLogger.debug('Messages loaded and classified', { count: events.length });
+
+    return {
+      events,
+      unclassifiedMessages,
+      groupedUnclassifiedMessages: groupUnclassifiedMessages(unclassifiedMessages),
+      groupedAllMessages: groupAllMessages(allMessages),
+      count: events.length,
+    };
+  } catch (error) {
+    historicalLogger.error('Failed to load historical messages', error);
+    return {
+      events: [],
+      unclassifiedMessages: [],
+      groupedUnclassifiedMessages: {},
+      groupedAllMessages: {},
+      error: error.message,
+    };
+  }
 };

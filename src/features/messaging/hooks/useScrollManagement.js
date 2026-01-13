@@ -29,17 +29,20 @@ export const useScrollManagement = (options = {}) => {
     setIsAtBottom(atBottom);
   }, []);
 
-  // Auto-scroll to bottom on initial load and after sending messages
+  // Auto-scroll to bottom on new messages (SSE or sent)
+  // Only auto-scroll if user is at the bottom (hasn't scrolled up)
   useEffect(() => {
     const eventsIncreased = events.length > previousEventsLength.current;
-    const hasNewSentEvent =
-      eventsIncreased && events.length > 0 && events[events.length - 1]?.type === 'sent';
 
-    if ((previousEventsLength.current === 0 && events.length > 0) || hasNewSentEvent) {
-      scrollToBottom();
+    if (eventsIncreased) {
+      // Auto-scroll only if user is at bottom
+      // This ensures auto-scroll doesn't interfere when user is reading old messages
+      if (isAtBottom) {
+        scrollToBottom();
+      }
     }
     previousEventsLength.current = events.length;
-  }, [events, scrollToBottom]);
+  }, [events, scrollToBottom, isAtBottom]);
 
   // Scroll to bottom when keyboard shows
   useEffect(() => {

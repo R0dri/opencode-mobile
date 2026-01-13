@@ -13,6 +13,7 @@ const SessionMessageFilter = ({
   isThinking,
   allMessages,
   onLoadOlderMessages,
+  showMeta,
 }) => {
   const filteredEvents = useMemo(() => {
     const filtered = [];
@@ -85,6 +86,7 @@ const SessionMessageFilter = ({
       onClearError={onClearError}
       isThinking={isThinking}
       onLoadOlderMessages={onLoadOlderMessages}
+      showMeta={showMeta}
     />
   );
 };

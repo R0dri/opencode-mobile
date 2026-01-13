@@ -4,12 +4,15 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSSEConnection } from './useSSEConnection';
 import { useConnectionManager } from './useConnectionManager';
 import { useAppState } from './useAppState';
+import { sseService } from '../services/sseService';
 
 import { useMessageProcessing, useEventManager } from '@/features/messaging';
 import { useProjectManager } from '@/features/projects';
 import { useModelManager } from '@/features/models';
 import { useTodoManager } from '@/features/todos';
 import { useNotificationManager } from '@/features/notifications';
+import notificationService from '@/features/notifications/services/notificationService';
+import serverStorage from '@/features/servers/services/serverStorage';
 
 import {
   sendMessageToSession,
@@ -27,13 +30,14 @@ const projectLogger = logger.tag('Project');
 const sessionLogger = logger.tag('Session');
 const deepLinkLogger = logger.tag('DeepLink');
 
-export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
+export const useSSEOrchestrator = (initialUrl = null) => {
   // Core state
   const [inputUrl, setInputUrl] = useState(initialUrl);
   const [baseUrl, setBaseUrl] = useState(null);
   const [currentAgentMode, setCurrentAgentMode] = useState('build');
   const [autoConnectAttempted, setAutoConnectAttempted] = useState(false);
   const [shouldShowProjectSelector, setShouldShowProjectSelector] = useState(false);
+  const [shouldShowServerSelector, setShouldShowServerSelector] = useState(false);
 
   // Queue for deep links that arrive before projects are loaded
   const pendingDeepLinkRef = useRef(null);
@@ -55,7 +59,7 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
       connectionLogger.debug('Connection state changed', { from: oldState, to: newState });
     },
     onError: errorInfo => {
-      connectionLogger.error('Connection error', errorInfo);
+      connectionLogger.warn('Connection error', errorInfo);
     },
   });
 
@@ -63,12 +67,49 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
 
   // App lifecycle with reconnection support
   const appState = useAppState({
-    onForeground: () => {
+    onForeground: async () => {
       connectionLogger.debug('App came to foreground');
-      // Reconnect if disconnected but was previously connected
+
       if (baseUrl && connection.isDisconnected && !connection.isFailed) {
         connectionLogger.debug('Reconnecting on app foreground');
         connection.connect();
+      }
+
+      if (baseUrl && projects.selectedSession && messaging.lastReceivedMessageId) {
+        try {
+          connectionLogger.debug('Loading missed messages on foreground', {
+            sessionId: projects.selectedSession.id,
+            lastMessageId: messaging.lastReceivedMessageId,
+          });
+
+          const missedMessages = await messaging.loadMessagesSince(
+            baseUrl,
+            projects.selectedSession.id,
+            projects.selectedProject,
+            messaging.lastReceivedMessageId,
+          );
+
+          if (missedMessages && missedMessages.length > 0) {
+            connectionLogger.debug('Adding missed messages to event list', {
+              count: missedMessages.length,
+            });
+            missedMessages.forEach(msg => messaging.addEvent(msg));
+          }
+
+          if (sessionStatus.handleSessionStatus) {
+            connectionLogger.debug('Refreshing session status on foreground');
+            await projects.refreshProjectSessions();
+          }
+
+          connectionLogger.debug('Refreshing project sessions on foreground');
+          await projects.refreshProjectSessions();
+
+          connectionLogger.debug('Foreground recovery complete', {
+            missedMessagesCount: missedMessages?.length || 0,
+          });
+        } catch (error) {
+          connectionLogger.error('Foreground recovery failed', error);
+        }
       }
     },
     onBackground: () => {
@@ -100,17 +141,29 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
       const { autoSelect = false, forceReconnect = false } = options;
 
       try {
-        // Disconnect if forcing reconnect
         if (forceReconnect && connection.isConnected) {
           disconnectFromEvents();
         }
 
-        // Validate and connect
         const cleanUrl = await connectionMgr.validateAndConnect(url);
-        setBaseUrl(cleanUrl);
-        setInputUrl(url);
+        if (!cleanUrl) {
+          connectionLogger.warn('Connection validation failed');
+          return;
+        }
 
-        // Auto-select saved project/session if requested
+        setInputUrl(url);
+        setBaseUrl(cleanUrl);
+        connection.connect({ url: cleanUrl, skipHealthCheck: true });
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (connection.isFailed) {
+          connectionLogger.warn('SSE connection failed');
+          return;
+        }
+
+        setBaseUrl(cleanUrl);
+
         if (autoSelect) {
           try {
             const savedProject = await storage.get('lastSelectedProject');
@@ -125,22 +178,27 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
                 await projects.selectSession(savedSession);
               }
             } else {
-              projectLogger.debug('No saved project to auto-select, showing project selector');
+              projectLogger.debug('No saved project, showing selector');
               setShouldShowProjectSelector(true);
             }
           } catch (error) {
-            connectionLogger.error('Error during auto-selection', error);
+            connectionLogger.warn('Auto-selection error', { error: error.message });
           }
         }
 
-        // Save successful connection URL
         await storage.set('lastConnectedUrl', url);
       } catch (error) {
-        connectionLogger.error('Connection failed', error);
-        throw error;
+        connectionLogger.warn('Connection error', { error: error.message });
       }
     },
-    [connectionMgr, projects, connection.isConnected, disconnectFromEvents],
+    [
+      connectionMgr,
+      projects,
+      connection,
+      connection.isConnected,
+      connection.isFailed,
+      disconnectFromEvents,
+    ],
   );
 
   const handleDeepLink = useCallback(
@@ -292,84 +350,58 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
 
   // Show embedded project selector when projects are loaded but no project is selected
   useEffect(() => {
-    if (
-      projects.projects &&
-      projects.projects.length > 0 &&
-      !projects.selectedProject &&
-      connection.isConnected
-    ) {
+    if (projects.projects && projects.projects.length > 0 && !projects.selectedProject) {
       projectLogger.debug('Projects loaded, showing embedded project selector');
       setShouldShowProjectSelector(true);
     }
-  }, [projects.projects, projects.selectedProject, connection.isConnected]);
+  }, [projects.projects, projects.selectedProject]);
 
   useEffect(() => {
-    const loadSavedUrl = async () => {
+    const init = async () => {
       try {
         const savedUrl = await storage.get('lastConnectedUrl');
         if (savedUrl) {
+          connectionLogger.debug('Found saved URL, checking health', { url: savedUrl });
+
+          // Step 1: Check if server is healthy
+          const health = await sseService.checkHealth(savedUrl);
+          if (!health.healthy) {
+            connectionLogger.warn('Server not healthy, showing server selector', { url: savedUrl });
+            setShouldShowServerSelector(true);
+            return;
+          }
+
+          connectionLogger.debug('Server healthy, starting parallel connections', {
+            url: savedUrl,
+          });
+
+          const cleanUrl = savedUrl.replace(/\/global\/event\/?$/, '').replace(/\/$/, '');
           setInputUrl(savedUrl);
-        }
-      } catch (error) {
-        connectionLogger.error('Failed to load saved URL', error);
-      }
-    };
-    loadSavedUrl();
-  }, []);
-
-  // Auto-connect on app start if we have a saved URL
-  useEffect(() => {
-    const autoConnect = async () => {
-      try {
-        const savedUrl = await storage.get('lastConnectedUrl');
-        connectionLogger.debug('Checking for saved connection');
-
-        if (savedUrl && inputUrl === savedUrl && !autoConnectAttempted) {
-          connectionLogger.debug('Auto-connect attempt starting', { url: savedUrl });
+          setBaseUrl(cleanUrl);
           setAutoConnectAttempted(true);
 
-          try {
-            if (!connection.isConnected) {
-              connectionLogger.debug('Establishing connection...');
-              await connect(savedUrl, { autoSelect: false });
-            } else {
-              connectionLogger.debug('Already connected, loading projects...');
-              await projects.loadProjects();
+          // Step 2: Parallel - SSE connect + load projects
+          // SSE will connect without health check (already validated)
+          connection.connect({ url: cleanUrl, skipHealthCheck: true });
 
-              const savedProject = await storage.get('lastSelectedProject');
-              const savedSession = await storage.get('lastSelectedSession');
-
-              if (savedProject) {
-                projectLogger.debug('Auto-selecting saved project', { name: savedProject.name });
-                await projects.selectProject(savedProject);
-                projectLogger.debug('Project auto-selected');
-              } else {
-                projectLogger.debug('No saved project, triggering project selector');
-                setShouldShowProjectSelector(true);
-              }
-
-              connectionLogger.debug('Auto-connect completed');
-            }
-          } catch (error) {
-            connectionLogger.error('Auto-connect failed', error);
-            setAutoConnectAttempted(false);
-          }
-        } else {
-          connectionLogger.debug('Skipping auto-connect', {
-            hasSavedUrl: !!savedUrl,
-            urlMatches: inputUrl === savedUrl,
-            alreadyAttempted: autoConnectAttempted,
-            isConnected: connection.isConnected,
-          });
+          // Projects will load reactively since baseUrl is set
+          // Force an immediate load to parallelize with SSE connection
+          projects.loadProjects();
         }
       } catch (error) {
-        connectionLogger.error('Error during auto-connect check', error);
+        connectionLogger.error('Failed to initialize connection', error);
       }
     };
 
-    const timeoutId = setTimeout(autoConnect, 500);
-    return () => clearTimeout(timeoutId);
-  }, [inputUrl, autoConnectAttempted, connection.isConnected, projects, connect]);
+    init();
+  }, []); // Run once at mount
+
+  // Load servers once at mount (non-blocking)
+  useEffect(() => {
+    serverStorage.loadServers().catch(err => {
+      connectionLogger.warn('Server storage load failed', { error: err.message });
+    });
+  }, []);
 
   // Event manager for SSE messages
   const eventManager = useEventManager(message => {
@@ -568,11 +600,29 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
 
   const selectSession = useCallback(
     async session => {
-      sessionLogger.debug('Selecting session', { title: session?.title });
+      console.log(
+        '🔍 selectSession CALLED with:',
+        JSON.stringify({ title: session?.title, id: session?.id }),
+      );
+      sessionLogger.debug('Selecting session', { title: session?.title, sessionId: session?.id });
       await projects.selectSession(session);
-      sessionLogger.debug('Session selected', { title: projects.selectedSession?.title });
+      sessionLogger.debug('Session selected', {
+        title: projects.selectedSession?.title,
+        sessionId: projects.selectedSession?.id,
+      });
       // Clear previous messages and load new session messages
+      console.log('🔍 After selectSession, checking conditions:', {
+        sessionId: session?.id,
+        baseUrl: !!baseUrl,
+        baseUrlValue: baseUrl,
+        selectedSessionId: projects.selectedSession?.id,
+      });
       if (session && baseUrl) {
+        console.log('🔍 Calling loadMessages with:', {
+          baseUrl,
+          sessionId: session.id,
+          projectsSelectedProject: !!projects.selectedProject,
+        });
         messaging.clearEvents();
         messaging.loadMessages(baseUrl, session.id, projects.selectedProject);
       } else {
@@ -679,6 +729,7 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
 
     // UI State
     shouldShowProjectSelector,
+    shouldShowServerSelector,
 
     // Actions
     connect,
@@ -697,5 +748,6 @@ export const useSSEOrchestrator = (initialUrl = 'http://10.1.1.122:63425') => {
     clearDebugMessages,
     sendTestNotification: notifications.sendTestNotification,
     loadOlderMessages,
+    refreshProjectSessions: projects.refreshProjectSessions,
   };
 };

@@ -29,6 +29,15 @@ const lightColors = {
   successBackground: '#e8f5e8',
   warningBackground: '#fff8e1',
 
+  // Glass Theme Tokens (Liquid Glass)
+  glassBackground: 'rgba(255, 255, 255, 0.65)',
+  glassSurface: 'rgba(255, 255, 255, 0.45)',
+  glassBorder: 'rgba(255, 255, 255, 0.5)',
+  glassHighlight: 'rgba(255, 255, 255, 0.8)',
+  glassShadow: 'rgba(0, 0, 0, 0.1)',
+  glassText: '#000000',
+  blurIntensity: 30,
+
   // Additional text colors
   errorText: '#d32f2f',
   warningText: '#856404',
@@ -66,6 +75,15 @@ const darkColors = {
   errorBackground: '#3E2723',
   successBackground: '#2E3B32',
   warningBackground: '#3E2E1F',
+
+  // Glass Theme Tokens (Liquid Glass - Dark)
+  glassBackground: 'rgba(0, 0, 0, 0.65)',
+  glassSurface: 'rgba(30, 30, 30, 0.45)',
+  glassBorder: 'rgba(255, 255, 255, 0.15)',
+  glassHighlight: 'rgba(255, 255, 255, 0.2)',
+  glassShadow: 'rgba(0, 0, 0, 0.5)',
+  glassText: '#ffffff',
+  blurIntensity: 30,
 
   // Additional text colors (adjusted for dark theme)
   errorText: '#FF8A80',

@@ -22,7 +22,7 @@
     },
     "android": {
       "package": "com.doza62.opencodemobile",
-      "permissions": [],
+      "permissions": ["CAMERA"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/opencode-adaptive-icon.png",
         "backgroundColor": "#000000"

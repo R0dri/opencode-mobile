@@ -54,6 +54,20 @@ export const preprocessSSEMessage = (rawMessage, options = {}) => {
     properties.part?.sessionID ||
     sessionId;
 
+  // Extract role - MUST use info.role for proper classification
+  // Also infer role from payload type for user messages (live feed)
+  let extractedRole = properties.info?.role || null;
+
+  // Infer role from payload type (user/system cases only for live feed)
+  if (!extractedRole) {
+    const msgType = payloadType?.toLowerCase();
+    if (msgType === 'user' || msgType === 'sent' || msgType === 'message.created') {
+      extractedRole = 'user';
+    } else if (msgType === 'system' || msgType === 'system_message') {
+      extractedRole = 'system';
+    }
+  }
+
   // Pre-processed message structure
   const processed = {
     // Source identification
@@ -63,7 +77,7 @@ export const preprocessSSEMessage = (rawMessage, options = {}) => {
     payloadType,
     timestamp: Date.now(),
 
-    role: properties.info?.role || null,
+    role: extractedRole,
     type: mapPayloadTypeToType(payloadType, properties.part?.type),
     agent: properties.info?.agent || null,
     mode: properties.info?.mode || 'build',

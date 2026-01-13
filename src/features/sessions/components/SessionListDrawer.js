@@ -1,5 +1,13 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { SectionList, StyleSheet, View, TouchableOpacity, Text, Alert } from 'react-native';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import {
+  SectionList,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import { useTheme } from '@/shared/components/ThemeProvider';
 import { groupSessionsByDateAndParent } from './utils';
 import { createStyles } from './styles';
@@ -18,6 +26,7 @@ import SkeletonItem from './SkeletonItem';
  * @param {Function} props.onSessionSelect - Function called when session is selected
  * @param {Function} props.deleteSession - Function called to delete a session
  * @param {Function} props.createSession - Function called to create a new session
+ * @param {Function} props.refreshSessions - Optional callback to refresh sessions (for pull-to-refresh)
  */
 const SessionListDrawer = ({
   sessions = [],
@@ -26,12 +35,14 @@ const SessionListDrawer = ({
   sessionLoading = false,
   onSessionSelect,
   deleteSession,
-  createSession
+  createSession,
+  refreshSessions = null,
 }) => {
   const theme = useTheme();
   const styles = createStyles(theme, { top: 0 }, 400); // Using dummy insets and width
 
   const [editMode, setEditMode] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const toggleEditMode = useCallback(() => setEditMode(prev => !prev), []);
 
   const sections = useMemo(() => {
@@ -39,10 +50,22 @@ const SessionListDrawer = ({
     return groupSessionsByDateAndParent(sessions);
   }, [sessions, sessionLoading]);
 
+  const handleRefresh = useCallback(async () => {
+    if (refreshSessions) {
+      setRefreshing(true);
+      try {
+        await refreshSessions();
+      } finally {
+        setRefreshing(false);
+      }
+    }
+  }, [refreshSessions]);
+
   const renderParentSession = ({ parent, children }) => {
     const isActive = selectedSession && selectedSession.id === parent.id;
     const isBusy = sessionStatuses[parent.id]?.type === 'busy';
-    const isParentBusy = children.some(child => sessionStatuses[child.id]?.type === 'busy') || isBusy;
+    const isParentBusy =
+      children.some(child => sessionStatuses[child.id]?.type === 'busy') || isBusy;
     const shouldShowChildren = isActive; // Only show children when parent is selected
 
     return (
@@ -60,20 +83,19 @@ const SessionListDrawer = ({
         />
 
         {/* Child Rows - show when parent is selected */}
-        {shouldShowChildren && children.map(child => (
-          <SessionItem
-            key={child.id}
-            session={child}
-            isActive={selectedSession?.id === child.id}
-            status={sessionStatuses[child.id]}
-            onSelect={() => onSessionSelect(child)}
-            onDelete={() => deleteSession(child.id)}
-            isChild={true}
-            showDeleteButton={editMode}
-          />
-        ))}
-
-
+        {shouldShowChildren &&
+          children.map(child => (
+            <SessionItem
+              key={child.id}
+              session={child}
+              isActive={selectedSession?.id === child.id}
+              status={sessionStatuses[child.id]}
+              onSelect={() => onSessionSelect(child)}
+              onDelete={() => deleteSession(child.id)}
+              isChild={true}
+              showDeleteButton={editMode}
+            />
+          ))}
       </View>
     );
   };
@@ -88,9 +110,11 @@ const SessionListDrawer = ({
     />
   );
 
-  const handleDeleteParent = (parentId) => {
+  const handleDeleteParent = parentId => {
     // Find the parent session object
-    const parent = sections.flatMap(section => section.data).find(session => session.id === parentId);
+    const parent = sections
+      .flatMap(section => section.data)
+      .find(session => session.id === parentId);
     if (!parent) return;
 
     const childCount = parent.children?.length || 0;
@@ -105,9 +129,9 @@ const SessionListDrawer = ({
           onPress: () => {
             deleteSession(parentId);
             parent.children?.forEach(child => deleteSession(child.id));
-          }
+          },
         },
-      ]
+      ],
     );
   };
 
@@ -116,7 +140,7 @@ const SessionListDrawer = ({
     if (item.isOrphaned) {
       return (
         <SessionItem
-          session={{...item, title: `${item.title} [ORPHANED]`}}
+          session={{ ...item, title: `${item.title} [ORPHANED]` }}
           isActive={selectedSession?.id === item.id}
           status={sessionStatuses[item.id]}
           onSelect={() => onSessionSelect(item)}
@@ -156,6 +180,11 @@ const SessionListDrawer = ({
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          refreshSessions ? (
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          ) : undefined
+        }
       />
     );
   }
@@ -163,13 +192,18 @@ const SessionListDrawer = ({
   return (
     <SectionList
       sections={sections}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={item => item.id.toString()}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
       style={styles.scrollView}
       contentContainerStyle={styles.listContent}
+      refreshControl={
+        refreshSessions ? (
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        ) : undefined
+      }
     />
   );
 };

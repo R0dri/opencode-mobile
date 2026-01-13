@@ -9,6 +9,7 @@ import {
   Keyboard,
   Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/shared/components/ThemeProvider';
 import { ThinkingIndicator } from '@/shared/components/common';
 import { logger } from '@/shared/services/logger';
@@ -26,6 +27,7 @@ const messageLogger = logger.tag('Message');
  * @param {string|null} props.error - Current error message
  * @param {Function} props.onClearError - Function to clear error
  * @param {boolean} props.isThinking - Whether to show thinking indicator
+ * @param {boolean} props.showMeta - Whether to show meta headers
  */
 const MessageEventList = ({
   events,
@@ -34,6 +36,7 @@ const MessageEventList = ({
   onClearError,
   isThinking,
   onDebugPress,
+  showMeta,
 }) => {
   const theme = useTheme();
   const markdownStyles = useMemo(() => getMarkdownStyles(theme), [theme]);
@@ -84,11 +87,16 @@ const MessageEventList = ({
         <ScrollView
           ref={scrollViewRef}
           style={styles.listContent}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingTop: 40 }}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
         >
+          <LinearGradient
+            colors={['transparent', theme.colors.background]}
+            style={styles.fadeGradient}
+            pointerEvents="none"
+          />
           {events.map(item => (
             <EventItem
               key={item.messageId || item.id}
@@ -96,6 +104,7 @@ const MessageEventList = ({
               theme={theme}
               markdownStyles={markdownStyles}
               showToast={showToast}
+              showMeta={showMeta}
             />
           ))}
           {isThinking && <ThinkingIndicator isThinking={true} inline={true} />}
@@ -122,7 +131,7 @@ const getStyles = theme =>
   StyleSheet.create({
     eventsContainer: {
       flex: 1,
-      backgroundColor: theme.colors.background,
+      backgroundColor: 'transparent',
     },
     markdownContainer: {
       alignSelf: 'flex-start',
@@ -152,6 +161,14 @@ const getStyles = theme =>
     listContent: {
       paddingHorizontal: 20,
       paddingBottom: 20,
+    },
+    fadeGradient: {
+      position: 'absolute',
+      top: -40,
+      left: 0,
+      right: 0,
+      height: 80,
+      zIndex: 1,
     },
     eventItem: {
       padding: 12,

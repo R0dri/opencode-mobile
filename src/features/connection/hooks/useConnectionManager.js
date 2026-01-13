@@ -69,7 +69,8 @@ const performHealthCheck = async baseUrl => {
  */
 const testConnectivityLegacy = async url => {
   if (!validateUrl(url)) {
-    throw new Error('Invalid URL format');
+    connectionLogger.warn('Invalid URL format', { url });
+    return false;
   }
 
   const testUrl = url.replace('/global/event', '');
@@ -78,16 +79,21 @@ const testConnectivityLegacy = async url => {
   connectionLogger.debug('Testing connectivity', { url: commandUrl });
 
   try {
-    await apiClient.get(commandUrl, {}, null);
-    connectionLogger.debug('Server reachable', { url: commandUrl });
-    return true;
-  } catch (error) {
-    connectionLogger.error('Connectivity check failed', {
+    const result = await apiClient.get(commandUrl, {}, null);
+    if (result) {
+      connectionLogger.debug('Server reachable', { url: commandUrl });
+      return true;
+    }
+    connectionLogger.warn('Connectivity check failed - server not reachable', {
       url: commandUrl,
-      status: error.response?.status,
-      message: error.message,
     });
-    throw error;
+    return false;
+  } catch (error) {
+    connectionLogger.warn('Connectivity check error', {
+      url: commandUrl,
+      error: error.message,
+    });
+    return false;
   }
 };
 
@@ -115,14 +121,13 @@ export const useConnectionManager = () => {
 
     // Fallback to legacy connectivity check
     connectionLogger.debug('Health endpoint unavailable, falling back to legacy check');
-    try {
-      await testConnectivityLegacy(baseUrl);
+    const isReachable = await testConnectivityLegacy(baseUrl);
+    if (isReachable) {
       setIsServerReachable(true);
       return { healthy: true };
-    } catch {
-      setIsServerReachable(false);
-      return { healthy: false };
     }
+    setIsServerReachable(false);
+    return { healthy: false };
   }, []);
 
   const validateAndConnect = useCallback(
@@ -169,20 +174,13 @@ export const useConnectionManager = () => {
         }
       }
 
-      // All retries exhausted
-      connectionLogger.error('Health check failed after all retries', {
+      // All retries exhausted - connection failed, don't return URL
+      connectionLogger.warn('Health check failed after all retries', {
         cleanUrl,
         maxRetries,
         lastError: lastError?.message,
       });
-
-      // Return the URL anyway and let the SSE service handle connection failures
-      // This prevents breaking the UI when server is temporarily unavailable
-      connectionLogger.debug(
-        'Returning URL despite health check failures - SSE will handle connection',
-        { cleanUrl },
-      );
-      return cleanUrl;
+      return null;
     },
     [testServerHealth],
   );

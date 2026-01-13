@@ -44,9 +44,9 @@ export const useNotificationManager = ({ serverBaseUrl, onDeepLink, onUrlUpdate 
 
       initialized.current = true;
 
-      // Race condition fix: serverBaseUrl may already be set when async init completes
+      // Initialize push token service if serverBaseUrl is already available
       if (serverUrlRef.current) {
-        pushTokenService.initialize(serverUrlRef.current);
+        await pushTokenService.initialize(serverUrlRef.current);
       }
     };
 
@@ -60,12 +60,6 @@ export const useNotificationManager = ({ serverBaseUrl, onDeepLink, onUrlUpdate 
       }
     };
   }, [onDeepLink, onUrlUpdate]);
-
-  useEffect(() => {
-    if (serverBaseUrl && initialized.current) {
-      pushTokenService.initialize(serverBaseUrl);
-    }
-  }, [serverBaseUrl]);
 
   const scheduleNotification = useCallback(async (title, body, data = {}) => {
     await notificationService.scheduleNotification(title, body, data);

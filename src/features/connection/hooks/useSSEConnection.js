@@ -24,8 +24,6 @@ export const useSSEConnection = (baseUrl, options = {}) => {
     onStateChange = null,
     onError = null,
     onHeartbeatMissed = null,
-    reconnectConfig = {},
-    heartbeatConfig = {},
   } = options;
 
   const [state, setState] = useState(ConnectionStateEnum.DISCONNECTED);
@@ -37,36 +35,27 @@ export const useSSEConnection = (baseUrl, options = {}) => {
 
   // Track connection attempt to prevent doom loops
   const connectionAttemptRef = useRef(false);
-  const lastBaseUrlRef = useRef(null);
 
-  // Update service configuration and set callbacks
+  // Keep callbacks in refs to avoid stale closures while preventing effect re-runs
+  const onStateChangeRef = useRef(onStateChange);
+  const onErrorRef = useRef(onError);
+  const onHeartbeatMissedRef = useRef(onHeartbeatMissed);
+
   useEffect(() => {
-    sseService.configureReconnect({
-      maxRetries: 10,
-      initialDelayMs: 1000,
-      maxDelayMs: 60000,
-      backoffMultiplier: 2,
-      jitterFactor: 0.3,
-      silentMode: true,
-      ...reconnectConfig,
-    });
+    onStateChangeRef.current = onStateChange;
+    onErrorRef.current = onError;
+    onHeartbeatMissedRef.current = onHeartbeatMissed;
+  });
 
-    // Heartbeat every 30 seconds to keep tunnel alive
-    // Allow 30 minutes for acknowledgment to support long-running connections
-    sseService.configureHeartbeat({
-      enabled: true,
-      intervalMs: 30000,
-      timeoutMs: 1800000, // 30 minutes for long-running SSE connections
-      ...heartbeatConfig,
-    });
-
+  // Set callbacks once on mount
+  useEffect(() => {
     sseService.setCallbacks({
       onStateChange: (newState, oldState) => {
         setState(newState);
         sseLogger.debug('Connection state changed in hook', { oldState, newState });
-        if (onStateChange) {
+        if (onStateChangeRef.current) {
           try {
-            onStateChange(newState, oldState);
+            onStateChangeRef.current(newState, oldState);
           } catch (err) {
             sseLogger.error('State change callback error', err);
           }
@@ -78,54 +67,77 @@ export const useSSEConnection = (baseUrl, options = {}) => {
         setErrorType(errorInfo?.type || ConnectionErrorTypeEnum.UNKNOWN);
         setRetryCount(errorInfo?.retryCount || 0);
         setMaxRetries(errorInfo?.maxRetries || 10);
-        sseLogger.error('Connection error in hook', errorInfo);
-        if (onError) {
+        sseLogger.warn('Connection error', errorInfo);
+        if (onErrorRef.current) {
           try {
-            onError(errorInfo);
+            onErrorRef.current(errorInfo);
           } catch (err) {
-            sseLogger.error('Error callback error', err);
+            sseLogger.warn('Error callback error', err);
           }
         }
       },
       onHeartbeatMissed: () => {
         sseLogger.warn('Heartbeat missed in hook');
-        if (onHeartbeatMissed) {
+        if (onHeartbeatMissedRef.current) {
           try {
-            onHeartbeatMissed();
+            onHeartbeatMissedRef.current();
           } catch (err) {
             sseLogger.error('Heartbeat missed callback error', err);
           }
         }
       },
     });
-  }, [onStateChange, onError, onHeartbeatMissed, reconnectConfig, heartbeatConfig]);
+  }, []);
 
-  const connect = useCallback(async () => {
-    if (!baseUrl) {
-      sseLogger.warn('Cannot connect: no baseUrl provided');
-      return;
-    }
+  const connect = useCallback(
+    async (urlOrOptions, options = {}) => {
+      // Support both connect(url), connect({ url, skipHealthCheck }), connect({ url, skipHealthCheck, autoSelect })
+      let url = typeof urlOrOptions === 'string' ? urlOrOptions : null;
+      let skipHealthCheck = false;
 
-    // Prevent doom loop: skip if already attempting to connect
-    if (connectionAttemptRef.current) {
-      sseLogger.debug('Skipping connect - connection attempt already in progress');
-      return;
-    }
+      if (typeof urlOrOptions === 'object') {
+        url = urlOrOptions.url;
+        skipHealthCheck = urlOrOptions.skipHealthCheck ?? false;
+        // autoSelect is handled by orchestrator, ignore here
+      }
 
-    const sseUrl = `${baseUrl}/global/event`;
-    sseLogger.debug('Connecting to SSE', { url: sseUrl });
+      // Use baseUrl if no URL provided
+      if (!url) {
+        url = baseUrl;
+      }
 
-    // Mark connection attempt
-    connectionAttemptRef.current = true;
+      if (!url) {
+        sseLogger.warn('Cannot connect: no baseUrl provided');
+        return;
+      }
 
-    try {
-      // SSE service connect is now async with health check
-      eventSourceRef.current = sseService.connect(sseUrl, { heartbeatCallback });
-    } finally {
-      // Always clear the attempt flag, even on failure
-      connectionAttemptRef.current = false;
-    }
-  }, [baseUrl, heartbeatCallback]);
+      // Prevent doom loop: skip if already attempting to connect
+      if (connectionAttemptRef.current) {
+        sseLogger.debug('Skipping connect - connection attempt already in progress');
+        return;
+      }
+
+      // Skip if already connected to avoid duplicate EventSources
+      if (sseService.isConnected()) {
+        sseLogger.debug('Skipping connect - already connected');
+        return;
+      }
+
+      const sseUrl = `${url}/global/event`;
+      sseLogger.debug('Connecting to SSE', { url: sseUrl, skipHealthCheck });
+
+      // Mark connection attempt
+      connectionAttemptRef.current = true;
+
+      try {
+        eventSourceRef.current = sseService.connect(sseUrl, { heartbeatCallback, skipHealthCheck });
+      } finally {
+        // Always clear the attempt flag, even on failure
+        connectionAttemptRef.current = false;
+      }
+    },
+    [baseUrl, heartbeatCallback],
+  );
 
   const disconnect = useCallback(() => {
     sseLogger.debug('Disconnect requested');
@@ -153,45 +165,6 @@ export const useSSEConnection = (baseUrl, options = {}) => {
   const acknowledgeHeartbeat = useCallback(() => {
     sseService.acknowledgeHeartbeat();
   }, []);
-
-  // Auto-connect when baseUrl changes and not already connected
-  useEffect(() => {
-    // Skip if baseUrl hasn't actually changed
-    if (baseUrl === lastBaseUrlRef.current) {
-      return;
-    }
-
-    const currentState = sseService.getState();
-    const isConnectingOrConnected =
-      currentState === ConnectionStateEnum.CONNECTING ||
-      currentState === ConnectionStateEnum.CONNECTED ||
-      currentState === ConnectionStateEnum.RECONNECTING;
-
-    sseLogger.debug('Auto-connect effect', {
-      baseUrl,
-      currentState,
-      isConnectingOrConnected,
-      hasEventSource: !!eventSourceRef.current,
-      hasConnectionAttempt: connectionAttemptRef.current,
-    });
-
-    if (
-      baseUrl &&
-      !isConnectingOrConnected &&
-      !eventSourceRef.current &&
-      !connectionAttemptRef.current
-    ) {
-      sseLogger.debug('Auto-connecting on baseUrl change', {
-        baseUrl,
-        previousUrl: lastBaseUrlRef.current,
-      });
-      lastBaseUrlRef.current = baseUrl;
-      connect();
-    }
-
-    // Don't disconnect on cleanup - let the orchestrator control lifecycle
-    // return () => disconnect();
-  }, [baseUrl, connect, disconnect]);
 
   return {
     // Connection state

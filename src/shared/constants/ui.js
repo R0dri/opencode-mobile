@@ -10,7 +10,7 @@ export const COLORS = {
   DARK: '#343a40',
   WHITE: '#ffffff',
   GRAY: '#6c757d',
-  MUTED: '#6c757d'
+  MUTED: '#6c757d',
 };
 
 export const SPACING = {
@@ -19,7 +19,7 @@ export const SPACING = {
   MD: 16,
   LG: 24,
   XL: 32,
-  XXL: 48
+  XXL: 48,
 };
 
 export const FONT_SIZES = {
@@ -29,7 +29,7 @@ export const FONT_SIZES = {
   LG: 16,
   XL: 18,
   XXL: 20,
-  XXXL: 24
+  XXXL: 24,
 };
 
 export const FONTS = {
@@ -43,7 +43,8 @@ export const BORDER_RADIUS = {
   MD: 8,
   LG: 12,
   XL: 16,
-  ROUND: 20
+  XXL: 24,
+  ROUND: 9999,
 };
 
 export const SHADOWS = {
@@ -52,13 +53,20 @@ export const SHADOWS = {
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
-    elevation: 3
+    elevation: 3,
   },
   MEDIUM: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5
-  }
+    elevation: 5,
+  },
+  GLASS: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
 };

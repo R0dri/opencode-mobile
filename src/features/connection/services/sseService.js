@@ -43,6 +43,35 @@ export class SSEService {
     // Current connection URL
     this.currentUrl = null;
     this.currentOptions = {};
+
+    // Initialization flag to prevent duplicate logging
+    this._initialized = false;
+
+    // Perform one-time initialization
+    this._initialize();
+  }
+
+  /**
+   * One-time initialization for SSE service
+   * Configures reconnection and heartbeat settings once
+   */
+  _initialize() {
+    if (this._initialized) return;
+
+    // Set default configuration without logging (avoid startup spam)
+    this.maxRetries = 10;
+    this.initialDelayMs = 1000;
+    this.maxDelayMs = 60000;
+    this.backoffMultiplier = 2;
+    this.jitterFactor = 0.3;
+    this.silentMode = true;
+
+    // Heartbeat configuration
+    this.heartbeatEnabled = true;
+    this.heartbeatIntervalMs = 30000;
+    this.heartbeatTimeoutMs = 1800000;
+
+    this._initialized = true;
   }
 
   /**
@@ -50,18 +79,12 @@ export class SSEService {
    * @param {Object} config - Reconnection configuration
    */
   configureReconnect(config = {}) {
-    this.maxRetries = config.maxRetries ?? 10;
-    this.initialDelayMs = config.initialDelayMs ?? 1000;
-    this.maxDelayMs = config.maxDelayMs ?? 60000;
-    this.backoffMultiplier = config.backoffMultiplier ?? 2;
-    this.jitterFactor = config.jitterFactor ?? 0.3;
-    this.silentMode = config.silentMode ?? true;
-    sseLogger.debug('Reconnection configured', {
-      maxRetries: this.maxRetries,
-      initialDelayMs: this.initialDelayMs,
-      maxDelayMs: this.maxDelayMs,
-      silentMode: this.silentMode,
-    });
+    if (config.maxRetries !== undefined) this.maxRetries = config.maxRetries;
+    if (config.initialDelayMs !== undefined) this.initialDelayMs = config.initialDelayMs;
+    if (config.maxDelayMs !== undefined) this.maxDelayMs = config.maxDelayMs;
+    if (config.backoffMultiplier !== undefined) this.backoffMultiplier = config.backoffMultiplier;
+    if (config.jitterFactor !== undefined) this.jitterFactor = config.jitterFactor;
+    if (config.silentMode !== undefined) this.silentMode = config.silentMode;
   }
 
   /**
@@ -69,14 +92,9 @@ export class SSEService {
    * @param {Object} config - Heartbeat configuration
    */
   configureHeartbeat(config = {}) {
-    this.heartbeatEnabled = config.enabled ?? true;
-    this.heartbeatIntervalMs = config.intervalMs ?? 30000;
-    this.heartbeatTimeoutMs = config.timeoutMs ?? 10000;
-    sseLogger.debug('Heartbeat configured', {
-      enabled: this.heartbeatEnabled,
-      intervalMs: this.heartbeatIntervalMs,
-      timeoutMs: this.heartbeatTimeoutMs,
-    });
+    if (config.enabled !== undefined) this.heartbeatEnabled = config.enabled;
+    if (config.intervalMs !== undefined) this.heartbeatIntervalMs = config.intervalMs;
+    if (config.timeoutMs !== undefined) this.heartbeatTimeoutMs = config.timeoutMs;
   }
 
   /**
@@ -297,6 +315,7 @@ export class SSEService {
         'Cache-Control': 'no-cache',
         ...options.headers,
       },
+      lineEndingCharacter: '\n',
     });
 
     this.eventSource.addEventListener('open', () => {
@@ -311,7 +330,7 @@ export class SSEService {
 
     this.eventSource.addEventListener('error', event => {
       const errorType = this.classifyError(event);
-      sseLogger.error('SSE connection error', {
+      sseLogger.warn('SSE connection lost, reconnecting...', {
         url,
         errorType,
         isReconnect,
