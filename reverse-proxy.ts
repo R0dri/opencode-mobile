@@ -13,6 +13,7 @@ export function startProxy(config: ProxyConfig): Promise<void> {
   // Validate config
   if (!config?.proxyPort || !config?.serverPort || !config?.tokenApiPort) {
     console.log("[Proxy] Invalid config received (re-init?), skipping");
+    console.log("[Proxy] startProxy called from:", new Error().stack?.split('\n').slice(2, 6).join('\n'));
     return Promise.resolve();
   }
 

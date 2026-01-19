@@ -14,6 +14,11 @@ let currentTunnel: TunnelInfo | null = null;
  * Start a tunnel with the specified provider
  */
 export async function startTunnel(config: TunnelConfig): Promise<TunnelInfo> {
+  if (!config?.port) {
+    console.log("[Tunnel] startTunnel called with invalid config:", JSON.stringify(config));
+    throw new Error("Invalid tunnel config: port is required");
+  }
+  
   const provider = config.provider || "ngrok";
 
   switch (provider) {
@@ -60,6 +65,11 @@ export async function stopTunnel(): Promise<void> {
  * Display QR code for tunnel URL
  */
 export async function displayQR(tunnelInfo: TunnelInfo): Promise<void> {
+  if (!tunnelInfo?.url) {
+    console.log("[Tunnel] displayQR called with invalid tunnelInfo:", JSON.stringify(tunnelInfo));
+    console.log("[Tunnel] Stack:", new Error().stack?.split('\n').slice(2, 6).join('\n'));
+    return;
+  }
   await displayQRCode(tunnelInfo.url);
 }
 
@@ -67,9 +77,18 @@ export async function displayQR(tunnelInfo: TunnelInfo): Promise<void> {
  * Get current tunnel details
  */
 export function getTunnelDetails(): TunnelDetails {
+  if (!currentTunnel?.url) {
+    return {
+      type: "none",
+      url: null,
+      loginStatus: "unknown",
+      loginId: null,
+      configPath: null,
+    };
+  }
   return {
-    type: currentTunnel?.provider || "none",
-    url: currentTunnel?.url || null,
+    type: currentTunnel.provider,
+    url: currentTunnel.url,
     loginStatus: "unknown",
     loginId: null,
     configPath: null,
@@ -80,6 +99,9 @@ export function getTunnelDetails(): TunnelDetails {
  * Get current tunnel info
  */
 export function getTunnelInfo(): TunnelInfo | null {
+  if (!currentTunnel?.url) {
+    return null;
+  }
   return currentTunnel;
 }
 
@@ -87,7 +109,7 @@ export function getTunnelInfo(): TunnelInfo | null {
  * Get current server URL from tunnel
  */
 export function getServerUrl(): string {
-  if (!currentTunnel) {
+  if (!currentTunnel?.url) {
     throw new Error("No tunnel active");
   }
   return currentTunnel.url;
