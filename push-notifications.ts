@@ -24,6 +24,7 @@ let tokenServerStarted = false;
 let pluginInitialized = false;
 let bunServer: any = null;
 let bunServerPort: number | null = null;
+let activeTunnelInfo: any = null;
 
 async function startTokenServer(
   openCodeUrl: string,
@@ -238,12 +239,22 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
       throw new Error("Failed to establish tunnel");
     }
 
-    displayQR(tunnelInfo);
+    // Store tunnel info for potential re-use
+    activeTunnelInfo = tunnelInfo;
+
+    await displayQR(tunnelInfo);
 
     return {
       event: async ({ event }) => {
+        // Use cached tunnel info if available
+        const currentTunnel = activeTunnelInfo;
+        if (!currentTunnel?.url) {
+          logger.warn("No active tunnel for push notification");
+          return;
+        }
+
         // Format notification from event
-        const notification = formatNotification(event, tunnelInfo.url, ctx);
+        const notification = formatNotification(event, currentTunnel.url, ctx);
         
         if (!notification) {
           // No notification needed for this event type

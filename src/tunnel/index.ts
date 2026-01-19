@@ -6,7 +6,7 @@ import type { TunnelConfig, TunnelInfo, TunnelDetails } from "./types";
 import { startNgrokTunnel, stopNgrokTunnel, diagnoseNgrok } from "./ngrok";
 import { startLocaltunnel, stopLocaltunnel } from "./localtunnel";
 import { startCloudflareTunnel, stopCloudflareTunnel } from "./cloudflare";
-import { displayQRCode } from "./qrcode";
+import { displayQRCode } from "../../tunnel-manager";
 
 let currentTunnel: TunnelInfo | null = null;
 
@@ -59,8 +59,8 @@ export async function stopTunnel(): Promise<void> {
 /**
  * Display QR code for tunnel URL
  */
-export function displayQR(tunnelInfo: TunnelInfo): void {
-  displayQRCode(tunnelInfo.url);
+export async function displayQR(tunnelInfo: TunnelInfo): Promise<void> {
+  await displayQRCode(tunnelInfo.url);
 }
 
 /**

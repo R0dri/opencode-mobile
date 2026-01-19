@@ -713,6 +713,7 @@ export function getServerUrl(): string | null {
 }
 
 export async function displayQRCode(url: string): Promise<void> {
+  console.log("[QR] displayQRCode called with:", typeof url, url);
   if (typeof url !== "string" || !url || url === "undefined" || !url.startsWith("http")) {
     console.error("[QR] Invalid URL, skipping QR:", url);
     return;

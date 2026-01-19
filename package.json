@@ -42,6 +42,7 @@
     "expo": "^54.0.31",
     "localtunnel": "^2.0.2",
     "ngrok": "^5.0.0-beta.2",
+    "opencode-mobile": "^1.0.4",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0"
   },
@@ -54,6 +55,8 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "version": "echo \"v$(npm pkg get version | tr -d '\"')\"",
+    "release": "npm run release:patch",
     "release:patch": "npm version patch && npm run build && npm publish",
     "release:minor": "npm version minor && npm run build && npm publish",
     "release:major": "npm version major && npm run build && npm publish",
