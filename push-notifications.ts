@@ -113,7 +113,9 @@ async function startTokenServer(
 
       // Return tunnel information
       if (url.pathname === "/tunnel" && req.method === "GET") {
+        logger.info("[PushPlugin] /tunnel endpoint called");
         const details = getTunnelDetails();
+        logger.info("[PushPlugin] Returning tunnel details:", details as any);
         return new Response(JSON.stringify(details, null, 2), {
           status: 200,
           headers: { ...cors, "Content-Type": "application/json" },
@@ -122,6 +124,7 @@ async function startTokenServer(
 
       // Proxy everything else directly to OpenCode server (transparent)
       const pathname = url.pathname + url.search;
+      logger.info(`[PushPlugin] Proxying request: ${req.method} ${pathname} -> ${openCodeUrl}`);
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
