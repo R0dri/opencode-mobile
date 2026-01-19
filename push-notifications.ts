@@ -5,7 +5,7 @@ import * as net from "net";
 declare const Bun: any;
 
 import type { Plugin } from "@opencode-ai/plugin";
-import { startTunnel, stopTunnel, displayQRCode as displayQR, getTunnelDetails } from "./src/tunnel";
+import { startTunnel, stopTunnel, displayQR, getTunnelDetails } from "./src/tunnel";
 import { getNextAvailablePort } from "./src/utils/port";
 import type { PushToken, Notification, NotificationEvent, PluginContext } from "./src/push";
 import { loadTokens, saveTokens, truncate } from "./src/push/token-store";

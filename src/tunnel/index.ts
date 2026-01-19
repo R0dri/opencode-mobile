@@ -92,5 +92,3 @@ export function getServerUrl(): string {
   }
   return currentTunnel.url;
 }
-
-export { displayQRCode };
