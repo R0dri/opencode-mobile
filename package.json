@@ -1,6 +1,6 @@
 {
   "name": "opencode-mobile",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Mobile push notification plugin for OpenCode - enables push notifications via Expo for mobile devices",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
