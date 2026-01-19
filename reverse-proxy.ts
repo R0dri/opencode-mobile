@@ -10,6 +10,12 @@ let serverStarted = false;
 let server: http.Server | null = null;
 
 export function startProxy(config: ProxyConfig): Promise<void> {
+  // Validate config
+  if (!config?.proxyPort || !config?.serverPort || !config?.tokenApiPort) {
+    console.log("[Proxy] Invalid config received (re-init?), skipping");
+    return Promise.resolve();
+  }
+
   return new Promise((resolve, reject) => {
     if (serverStarted) {
       console.log("[Proxy] Proxy already running");
