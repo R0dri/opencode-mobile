@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+/**
+ * OpenCode Mobile Plugin - Endpoint Audit Utility
+ * Run with: npx opencode-mobile audit
+ */
+
+import { main } from "../dist/src/cli/index.js";
+
+main().catch((error) => {
+  console.error("Fatal error:", error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});

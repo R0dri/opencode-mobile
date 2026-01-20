@@ -477,3 +477,25 @@ export async function isNgrokInstalled(): Promise<boolean> {
     return false;
   }
 }
+
+// Test helper functions
+/**
+ * Get current ngrok instance (for testing)
+ */
+export function getInstance(): any {
+  return ngrokInstance;
+}
+
+/**
+ * Set ngrok instance (for testing)
+ */
+export function setInstance(instance: any): void {
+  ngrokInstance = instance;
+}
+
+/**
+ * Clear ngrok instance (for testing)
+ */
+export function clearInstance(): void {
+  ngrokInstance = null;
+}

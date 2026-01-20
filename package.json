@@ -5,14 +5,22 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "opencode-mobile": "./bin/audit"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./audit": {
+      "import": "./dist/src/cli/index.js",
+      "types": "./dist/src/cli/index.d.ts"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "keywords": [
     "opencode",
@@ -46,10 +54,13 @@
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
+    "@types/localtunnel": "^2.0.4",
     "@types/node": "^22.13.9",
     "@types/qrcode": "^1.5.6",
     "@types/qrcode-terminal": "^0.12.2",
-    "typescript": "^5.8.2"
+    "@vitest/ui": "^4.0.17",
+    "typescript": "^5.8.2",
+    "vitest": "^4.0.17"
   },
   "scripts": {
     "build": "tsc",
@@ -60,6 +71,8 @@
     "release:minor": "npm version minor && npm run build && npm publish",
     "release:major": "npm version major && npm run build && npm publish",
     "prepublishOnly": "npm run build",
+    "audit": "node bin/audit",
+    "audit:build": "npm run build && node bin/audit --help",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

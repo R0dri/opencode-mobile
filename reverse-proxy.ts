@@ -45,7 +45,37 @@ export function startProxy(config: ProxyConfig): Promise<void> {
 
       const proxyReq = httpRequest(options, (proxyRes) => {
         clientRes.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
-        proxyRes.pipe(clientRes);
+
+        // Clean up listeners when done
+        const cleanup = () => {
+          proxyRes.removeListener("data", onData);
+          proxyRes.removeListener("end", onEnd);
+          proxyRes.removeListener("error", onError);
+        };
+
+        const onData = (chunk: Buffer) => {
+          clientRes.write(chunk);
+        };
+
+        const onEnd = () => {
+          cleanup();
+          clientRes.end();
+        };
+
+        const onError = (err: Error) => {
+          cleanup();
+          if (!clientRes.headersSent) {
+            clientRes.writeHead(502, { "Content-Type": "text/plain" });
+            clientRes.end("Proxy error");
+          }
+        };
+
+        proxyRes.on("data", onData);
+        proxyRes.on("end", onEnd);
+        proxyRes.on("error", onError);
+
+        // Clean up if client disconnects
+        clientRes.on("close", cleanup);
       });
 
       proxyReq.on("error", (err: any) => {
