@@ -2,47 +2,45 @@
 
 ## Overview
 
-This is a mobile push notification plugin for OpenCode, built with TypeScript and Bun runtime. The plugin provides push notification capabilities through Expo Push Notifications service, with tunnel management for mobile device connectivity.
+`opencode-mobile` - Single mobile push notification plugin for OpenCode. Enables push notifications via Expo for mobile devices with tunnel management (ngrok/cloudflare/localtunnel). Built with TypeScript and Bun runtime.
 
 ## Build, Lint, and Test Commands
 
 ```bash
-# Run the main plugin
-bun run index.ts
-
-# Run push notifications directly
-bun run push-notifications.ts
-
-# Type-check only (no emit)
-npx tsc --noEmit
-
-# Compile TypeScript to JavaScript
-npx tsc
-
-# Build and type-check
-npm run build
-
-# Run linting (no ESLint configured - follow existing patterns manually)
-npx eslint "**/*.ts" --fix
-
-# Test suite (not configured - add tests when implementing new features)
-bun test
-bun test <test-file>.test.ts
-bun test --test-name-pattern="test name"
+bun run index.ts                    # Run the plugin
+npx tsc --noEmit                    # Type-check only
+npx tsc                             # Compile TypeScript
+npm run build                       # Build (type-check + compile)
+npx eslint "**/*.ts" --fix          # Linting (follow existing patterns)
+bun test                            # Tests (not configured)
+bun test <file>.test.ts             # Run specific test
+bun test --test-name-pattern="name" # Run by pattern
 ```
 
-## Project Structure
+## Project Structure (Single Plugin)
 
 ```
-/Users/rodri/.config/opencode/opencode-mobile-plugin/
-├── index.ts                    # Main barrel export
-├── push-notifications.ts       # Core plugin logic (main entry point)
-├── tunnel-manager.ts           # Tunnel management (Cloudflare/ngrok)
-├── reverse-proxy.ts            # HTTP proxy server
-├── hello-world.ts              # Example plugin
-├── tsconfig.json               # TypeScript configuration
-├── package.json                # Dependencies and scripts
-└── dist/                       # Compiled output
+plugin/
+├── index.ts              # Single entry point (barrel export)
+├── push-notifications.ts # Main plugin logic
+├── sdk-logger.ts         # Custom logger
+├── tsconfig.json         # TypeScript config (strict mode)
+└── src/                  # Modular source code
+    ├── tunnel/           # Tunnel providers
+    │   ├── index.ts      # Unified interface
+    │   ├── ngrok.ts      # Ngrok with multi-strategy fallback
+    │   ├── cloudflare.ts # Cloudflare tunnel
+    │   ├── localtunnel.ts# Localtunnel
+    │   ├── qrcode.ts     # QR code utilities
+    │   └── types.ts      # Type definitions
+    ├── push/             # Push notification logic
+    │   ├── index.ts
+    │   ├── types.ts
+    │   ├── token-store.ts
+    │   ├── formatter.ts
+    │   └── sender.ts
+    ├── proxy/            # Proxy utilities
+    └── utils/            # Shared utilities
 ```
 
 ## Code Style Guidelines
@@ -50,23 +48,12 @@ bun test --test-name-pattern="test name"
 ### Imports
 
 ```typescript
-// Standard library - namespace imports
 import * as fs from "fs";
 import * as path from "path";
-
-// External modules - named or default imports
-import ngrok from "ngrok";
+import ngrok from "@ngrok/ngrok";
 import qrcode from "qrcode";
-
-// Types - use import type when only using types
 import type { Plugin } from "@opencode-ai/plugin";
-import type { TunnelConfig } from "./tunnel-manager";
-
-// Group imports logically: types → external modules → internal modules
-import type { Plugin } from "@opencode-ai/plugin";
-import * as fs from "fs";
-import * as path from "path";
-import { startTunnel } from "./tunnel-manager";
+import { startTunnel } from "./src/tunnel";
 ```
 
 ### Formatting
@@ -75,12 +62,11 @@ import { startTunnel } from "./tunnel-manager";
 - **Single quotes** for strings
 - **Semicolons** at end of statements
 - **Trailing commas** in multi-line objects/arrays
-- **Max line length**: ~100 characters (soft limit)
 
 ### Types
 
 ```typescript
-// Use interfaces for object shapes
+// Interfaces for object shapes
 interface PushToken {
   token: string;
   platform: "ios" | "android";
@@ -88,24 +74,16 @@ interface PushToken {
   registeredAt: string;
 }
 
-// Use type aliases for unions/primitives
+// Type aliases for unions/primitives
 type NotificationHandler = (notification: Notification) => Promise<void>;
 
-// Explicit return types for public functions
-function loadTokens(): PushToken[] {
-  // ...
-}
-
-// Avoid `any` - use `unknown` with type guards when uncertain
-function safeParse(data: unknown): Record<string, any> {
+// Explicit return types, avoid `any`
+function loadTokens(): PushToken[] { /* ... */ }
+function safeParse(data: unknown): Record<string, unknown> {
   if (typeof data === "string") {
-    try {
-      return JSON.parse(data);
-    } catch {
-      return {};
-    }
+    try { return JSON.parse(data); } catch { return {}; }
   }
-  return data as Record<string, any>;
+  return data as Record<string, unknown>;
 }
 ```
 
@@ -113,146 +91,73 @@ function safeParse(data: unknown): Record<string, any> {
 
 | Pattern | Convention | Example |
 |---------|------------|---------|
-| Constants | UPPER_SNAKE_CASE | `TOKEN_FILE`, `BUN_SERVER_PORT` |
-| Functions/variables | camelCase | `loadTokens`, `startTunnel` |
-| Interfaces/classes | PascalCase | `PushToken`, `TunnelConfig` |
-| Private/internal | prefix with `_` | `_bunServer`, `_pluginInitialized` |
-| Booleans | prefix with `is`, `has`, `should` | `isRunning`, `hasStarted` |
+| Constants | UPPER_SNAKE_CASE | `TOKEN_FILE` |
+| Functions/variables | camelCase | `loadTokens` |
+| Interfaces/classes | PascalCase | `PushToken` |
+| Private/internal | prefix `_` | `_bunServer` |
+| Booleans | prefix `is`/`has`/`should` | `isRunning` |
 
 ### Error Handling
 
 ```typescript
-// Always wrap async operations in try-catch
 try {
   await someAsyncOperation();
-} catch (error: any) {
-  // Log errors with module prefix
-  console.error("[ModuleName] Error message:", error.message);
-  
-  // Provide context in error messages
-  if (error.message?.includes("specific case")) {
-    console.error("[PushPlugin] Handle specific error:", error.message);
-  } else {
-    console.error("[PushPlugin] Unexpected error:", error.message);
-  }
+} catch (error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error("[ModuleName] Error:", message);
 }
 
-// Handle specific error types when possible
-if (error instanceof ValidationError) {
-  // Handle validation errors
-}
+if (error instanceof ValidationError) { /* handle */ }
 ```
 
 ### Console Logging
 
-- Use **module prefixes** in all console output: `[PushPlugin]`, `[Tunnel]`, `[Proxy]`
-- Use **emojis** for status indicators: `✅`, `❌`, `💡`, `ℹ️`
-- Log important steps and results
+- Use **module prefixes**: `[PushPlugin]`, `[Tunnel]`, `[Proxy]`
+- Use **emojis**: `✅`, `❌`, `💡`, `ℹ️`
+- Custom logger: `logger.info()`, `logger.error()`
 
 ```typescript
-console.log('[PushPlugin] Starting...');
-console.error('[PushPlugin] Failed:', error.message);
-console.log(`[Tunnel] URL: ${url}`);
-console.log('✅ Server started successfully');
-console.log('❌ Connection failed:', error.message);
+console.log("[PushPlugin] Starting...");
+console.error("[PushPlugin] Failed:", error.message);
 ```
 
 ### Async/Await
 
 ```typescript
-// Use async/await over raw promises
 async function startServer(): Promise<void> {
-  try {
-    await startProxy();
-    await startTunnel();
-  } catch (error) {
-    // handle error
-  }
+  await startProxy();
+  await startTunnel();
 }
 
-// Never leave promises unhandled
-// Use Promise.all() for parallel operations
-const [result1, result2] = await Promise.all([
-  operation1(),
-  operation2(),
-]);
+const [result1, result2] = await Promise.all([operation1(), operation2()]);
 ```
 
-### Module Structure
-
-- One export per file (usually)
-- Export types alongside functions when related
-- Keep files focused (<400 lines when possible)
-- Use barrel exports (`index.ts`) for directories
-- Default export for main plugin function
+## Plugin Interface
 
 ```typescript
-// Main plugin export pattern
+import type { Plugin } from "@opencode-ai/plugin";
+
 export const PushNotificationPlugin: Plugin = async (ctx) => {
-  // Plugin initialization logic
   return {
-    event: async ({ event }) => {
-      // Handle events
-    },
+    event: async ({ event }) => { /* handle event */ },
   };
 };
 
 export default PushNotificationPlugin;
 ```
 
-### Signal Handling
-
-```typescript
-// Handle process signals for graceful shutdown
-const signals = ["SIGINT", "SIGTERM", "SIGHUP"];
-signals.forEach((signal) => {
-  process.on(signal, async () => {
-    await gracefulShutdown();
-    process.exit(0);
-  });
-});
-```
-
-## Plugin Architecture
-
-### Entry Points
-
-- **Main entry**: `index.ts` (barrel export)
-- **Plugin entry**: `push-notifications.ts` (main plugin logic)
-- **Compiled output**: `dist/index.js`
-
-### Plugin Interface
-
-All plugins must export a function matching the `Plugin` type from `@opencode-ai/plugin`:
-
-```typescript
-import type { Plugin } from "@opencode-ai/plugin";
-
-export const MyPlugin: Plugin = async (ctx) => {
-  // Initialize plugin
-  return {
-    event: async ({ event }) => {
-      // Handle event
-    },
-  };
-};
-
-export default MyPlugin;
-```
-
 ## Key Patterns
 
-1. **Plugin Pattern**: Export a `Plugin` function that returns an event handler
-2. **Graceful Degradation**: Operations fail gracefully with fallback behavior
-3. **Signal Handling**: Listen for SIGINT/SIGTERM for cleanup
-4. **Environment Variables**: Use `process.env` for config (OPENCODE_PORT, etc.)
-5. **Bun Server**: Use `Bun.serve()` for HTTP servers (not Node.js http)
-6. **Tunnel Providers**: Support both Cloudflare and ngrok tunnels
+1. **Single Entry Point**: `index.ts` exports the main plugin
+2. **Plugin Pattern**: Export a `Plugin` function returning an event handler
+3. **Graceful Shutdown**: Listen for SIGINT/SIGTERM/SIGHUP
+4. **Bun Server**: Use `Bun.serve()` for HTTP servers
+5. **Tunnel Providers**: Support ngrok, cloudflare, localtunnel with fallback
+6. **Ngrok Multi-Strategy**: 4 fallback strategies if one fails
 
 ## Additional Notes
 
-- This is a **Bun** project (not Node.js/npm)
-- TypeScript with **strict mode** enabled (see tsconfig.json)
-- No formal test suite exists yet - add tests when implementing new features
-- No ESLint/Prettier config - follow existing code patterns manually
-- Dependencies: @opencode-ai/plugin, ngrok, cloudflared, qrcode, Bun
+- **Runtime**: Bun (not Node.js)
+- **TypeScript**: Strict mode enabled
+- **No ESLint/Prettier**: Follow existing patterns manually
+- **Dependencies**: @opencode-ai/plugin, @ngrok/ngrok, qrcode, cloudflared, localtunnel

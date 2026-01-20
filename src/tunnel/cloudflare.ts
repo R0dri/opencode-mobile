@@ -9,50 +9,84 @@ let cloudflareProcess: any = null;
 let cloudflareUrl: string | null = null;
 
 /**
+ * Find cloudflared binary in common locations
+ */
+export function findCloudflared(): string | null {
+  const paths = [
+    "/usr/local/bin/cloudflared",
+    "/usr/bin/cloudflared",
+    `${process.env.HOME}/.cloudflared/cloudflared`,
+    "/opt/homebrew/bin/cloudflared",
+  ];
+  for (const p of paths) {
+    try {
+      if (require("fs").existsSync(p)) return p;
+    } catch {}
+  }
+  return null;
+}
+
+/**
  * Start a Cloudflare tunnel
  */
 export async function startCloudflareTunnel(config: TunnelConfig): Promise<TunnelInfo> {
+  const cloudflaredPath = findCloudflared();
+  if (!cloudflaredPath)
+    throw new Error(
+      "cloudflared not found. Install from https://github.com/cloudflare/cloudflared"
+    );
+
   return new Promise((resolve, reject) => {
-    try {
-      const cloudflared = spawn("cloudflared", [
-        "tunnel",
-        "--url",
-        `http://127.0.0.1:${config.port}`,
-      ]);
+    const timeout = setTimeout(
+      () => reject(new Error("Timeout waiting for cloudflared URL (60s)")),
+      60000
+    );
 
-      cloudflareProcess = cloudflared;
+    cloudflareProcess = spawn(cloudflaredPath, [
+      "tunnel",
+      "--url",
+      `http://127.0.0.1:${config.port}`,
+    ], { stdio: ["ignore", "pipe", "pipe"] });
 
-      let output = "";
-      cloudflared.stdout.on("data", (data: Buffer) => {
-        output += data.toString();
-        const match = output.match(/https:\/\/[^\s]+\\.trycloudflare\\.com/);
-        if (match) {
-          cloudflareUrl = match[0];
-          resolve({
-            url: cloudflareUrl,
-            tunnelId: "cloudflare",
-            port: config.port,
-            provider: "cloudflare",
-          });
-        }
-      });
+    const onData = (data: Buffer) => {
+      const line = data.toString().trim();
+      
+      const urlMatch = line.match(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/);
+      
+      if (urlMatch) {
+        const url = urlMatch[0];
+        console.log("[Cloudflared] URL:", url);
+        clearTimeout(timeout);
+        cloudflareUrl = url;
+        resolve({
+          url: cloudflareUrl,
+          tunnelId: cloudflareUrl.split("://")[1].split(".")[0],
+          port: config.port,
+          provider: "cloudflare",
+        });
+      } else if (line.includes("ERR") || line.includes("error")) {
+        console.log("[Cloudflared]", line);
+      }
+    };
 
-      cloudflared.stderr.on("data", (data: Buffer) => {
-        console.error("[Tunnel] Cloudflare stderr:", data.toString());
-      });
-
-      cloudflared.on("error", (err: Error) => {
-        reject(new Error(`Cloudflare tunnel failed: ${err.message}`));
-      });
-
-      cloudflared.on("close", (code: number) => {
-        if (code !== 0 && !cloudflareUrl) {
-          reject(new Error(`Cloudflare tunnel exited with code ${code}`));
-        }
-      });
-    } catch (error: any) {
-      reject(new Error(`Cloudflare tunnel failed: ${error.message}`));
-    }
+    cloudflareProcess.stdout?.on("data", onData);
+    cloudflareProcess.stderr?.on("data", onData);
+    cloudflareProcess.on("error", (err: Error) => {
+      clearTimeout(timeout);
+      reject(err);
+    });
+    cloudflareProcess.on("exit", (code: number | null) => {
+      // If no URL was captured, treat as failure even on clean exit
+      if (!cloudflareUrl) {
+        clearTimeout(timeout);
+        reject(new Error("cloudflared exited without providing a tunnel URL"));
+        return;
+      }
+      if (code !== 0 && code !== null) {
+        clearTimeout(timeout);
+        reject(new Error(`cloudflared exited with code ${code}`));
+      }
+    });
   });
 }
 
@@ -61,22 +95,22 @@ export async function startCloudflareTunnel(config: TunnelConfig): Promise<Tunne
  */
 export async function stopCloudflareTunnel(): Promise<void> {
   if (cloudflareProcess) {
-    cloudflareProcess.kill();
+    cloudflareProcess.kill("SIGTERM");
     cloudflareProcess = null;
-    cloudflareUrl = null;
   }
+  cloudflareUrl = null;
 }
 
 /**
  * Check if cloudflared is installed
  */
 export async function isCloudflareInstalled(): Promise<boolean> {
-  try {
-    const { promisify } = await import("util");
-    const execAsync = promisify((await import("child_process")).exec);
-    await execAsync("which cloudflared");
-    return true;
-  } catch {
-    return false;
-  }
+  return findCloudflared() !== null;
+}
+
+/**
+ * Get the current Cloudflare tunnel URL
+ */
+export function getCloudflareUrl(): string | null {
+  return cloudflareUrl;
 }

@@ -2,11 +2,25 @@
  * Tunnel manager - unified interface for all tunnel providers
  */
 
+import * as fs from "fs";
 import type { TunnelConfig, TunnelInfo, TunnelDetails } from "./types";
-import { startNgrokTunnel, stopNgrokTunnel, diagnoseNgrok } from "./ngrok";
-import { startLocaltunnel, stopLocaltunnel } from "./localtunnel";
-import { startCloudflareTunnel, stopCloudflareTunnel } from "./cloudflare";
-import { displayQRCode } from "../../tunnel-manager";
+import { 
+  startNgrokTunnel, 
+  stopNgrokTunnel, 
+  diagnoseNgrok, 
+  ensureNgrokReady 
+} from "./ngrok";
+import { 
+  startLocaltunnel, 
+  stopLocaltunnel, 
+  getLocaltunnelUrl 
+} from "./localtunnel";
+import { 
+  startCloudflareTunnel, 
+  stopCloudflareTunnel, 
+  getCloudflareUrl 
+} from "./cloudflare";
+import { displayQRCode } from "./qrcode";
 
 let currentTunnel: TunnelInfo | null = null;
 
@@ -15,13 +29,13 @@ let currentTunnel: TunnelInfo | null = null;
  */
 export async function startTunnel(config: TunnelConfig): Promise<TunnelInfo> {
   // Validate that we have a proper TunnelConfig object
-  if (!config || typeof config !== 'object') {
+  if (!config || typeof config !== "object") {
     console.log("[Tunnel] startTunnel called with invalid config type:", typeof config);
     throw new Error("Invalid tunnel config: config must be an object");
   }
 
   // Check if this looks like the OpenCode client context (has 'client' property)
-  if ('client' in config) {
+  if ("client" in config) {
     console.log("[Tunnel] startTunnel called with OpenCode client context instead of TunnelConfig");
     console.log("[Tunnel] This indicates a plugin initialization issue");
     throw new Error("Invalid tunnel config: received OpenCode client context");
@@ -79,13 +93,13 @@ export async function stopTunnel(): Promise<void> {
  */
 export async function displayQR(tunnelInfo: TunnelInfo): Promise<void> {
   // Validate that we have a proper TunnelInfo object, not the OpenCode client context
-  if (!tunnelInfo || typeof tunnelInfo !== 'object') {
+  if (!tunnelInfo || typeof tunnelInfo !== "object") {
     console.log("[Tunnel] displayQR called with invalid tunnelInfo type:", typeof tunnelInfo);
     return;
   }
 
   // Check if this looks like the OpenCode client context (has 'client' property)
-  if ('client' in tunnelInfo) {
+  if ("client" in tunnelInfo) {
     console.log("[Tunnel] displayQR called with OpenCode client context instead of TunnelInfo");
     console.log("[Tunnel] This indicates a plugin initialization issue");
     return;
@@ -93,7 +107,7 @@ export async function displayQR(tunnelInfo: TunnelInfo): Promise<void> {
 
   if (!tunnelInfo?.url) {
     console.log("[Tunnel] displayQR called with invalid tunnelInfo:", JSON.stringify(tunnelInfo).substring(0, 200));
-    console.log("[Tunnel] Stack:", new Error().stack?.split('\n').slice(2, 6).join('\n'));
+    console.log("[Tunnel] Stack:", new Error().stack?.split("\n").slice(2, 6).join("\n"));
     return;
   }
 
@@ -101,25 +115,76 @@ export async function displayQR(tunnelInfo: TunnelInfo): Promise<void> {
 }
 
 /**
- * Get current tunnel details
+ * Get current tunnel details with login status
  */
 export function getTunnelDetails(): TunnelDetails {
-  if (!currentTunnel?.url) {
-    return {
-      type: "none",
-      url: null,
-      loginStatus: "unknown",
-      loginId: null,
-      configPath: null,
-    };
-  }
-  return {
-    type: currentTunnel.provider,
-    url: currentTunnel.url,
+  const details: TunnelDetails = {
+    type: "none",
+    url: null,
     loginStatus: "unknown",
     loginId: null,
     configPath: null,
   };
+
+  // Determine tunnel type and URL
+  if (currentTunnel) {
+    details.type = currentTunnel.provider;
+    details.url = currentTunnel.url;
+  } else if (getLocaltunnelUrl()) {
+    details.type = "localtunnel";
+    details.url = getLocaltunnelUrl();
+  } else if (getCloudflareUrl()) {
+    details.type = "cloudflare";
+    details.url = getCloudflareUrl();
+  }
+
+  // Get config path for ngrok
+  const configPaths = [
+    `${process.env.HOME}/Library/Application Support/ngrok/ngrok.yml`,
+    `${process.env.HOME}/.config/ngrok/ngrok.yml`,
+    "/etc/ngrok/ngrok.yml",
+  ];
+
+  for (const p of configPaths) {
+    try {
+      if (fs.existsSync(p)) {
+        details.configPath = p;
+        break;
+      }
+    } catch {}
+  }
+
+  // Check ngrok config for login status
+  if (details.configPath && details.type === "ngrok") {
+    try {
+      const configContent = fs.readFileSync(details.configPath, "utf-8");
+      
+      // Check for authtoken (indicates logged in)
+      if (configContent.includes("authtoken:")) {
+        details.loginStatus = "authenticated";
+        
+        // Try to extract account info from config comments
+        const accountMatch = configContent.match(/account:\s*(.+)/);
+        if (accountMatch) {
+          details.loginId = accountMatch[1].trim();
+        }
+      } else {
+        details.loginStatus = "free";
+      }
+    } catch {}
+  }
+
+  // Localtunnel is always free/anonymous
+  if (details.type === "localtunnel") {
+    details.loginStatus = "anonymous";
+  }
+
+  // Cloudflare might have config info
+  if (details.type === "cloudflare") {
+    details.loginStatus = "unknown";
+  }
+
+  return details;
 }
 
 /**
@@ -141,3 +206,24 @@ export function getServerUrl(): string {
   }
   return currentTunnel.url;
 }
+
+/**
+ * Graceful shutdown
+ */
+export async function gracefulShutdown(): Promise<void> {
+  console.log("\n[Tunnel] Graceful shutdown...");
+  await stopTunnel();
+  console.log("[Tunnel] Shutdown complete");
+}
+
+// Handle process signals for graceful shutdown
+const signals = ["SIGINT", "SIGTERM", "SIGHUP"];
+signals.forEach((signal) => {
+  process.on(signal, async () => {
+    await gracefulShutdown();
+    process.exit(0);
+  });
+});
+
+// Re-export ngrok utilities
+export { diagnoseNgrok, ensureNgrokReady };
