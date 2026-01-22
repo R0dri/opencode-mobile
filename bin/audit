@@ -5,9 +5,27 @@
  * Run with: npx opencode-mobile audit
  */
 
-import { main } from "../dist/src/cli/index.js";
+import { main as auditMain } from "../dist/src/cli/index.js";
+import { main as qrMain } from "../dist/src/cli/qr.js";
 
-main().catch((error) => {
+const args = process.argv.slice(2);
+const subcommand = args[0];
+
+const run = async () => {
+  if (subcommand === "qr") {
+    await qrMain(args.slice(1));
+    return;
+  }
+
+  if (subcommand === "audit") {
+    await auditMain(args.slice(1));
+    return;
+  }
+
+  await auditMain(args);
+};
+
+run().catch((error) => {
   console.error("Fatal error:", error instanceof Error ? error.message : String(error));
   process.exit(1);
 });

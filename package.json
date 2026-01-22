@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "bin": {
-    "opencode-mobile": "./bin/audit"
+    "opencode-mobile": "./bin/audit",
+    "opencode-mobile-qr": "./bin/qr"
   },
   "exports": {
     ".": {
@@ -16,6 +17,10 @@
     "./audit": {
       "import": "./dist/src/cli/index.js",
       "types": "./dist/src/cli/index.d.ts"
+    },
+    "./qr": {
+      "import": "./dist/src/cli/qr.js",
+      "types": "./dist/src/cli/qr.d.ts"
     }
   },
   "files": [

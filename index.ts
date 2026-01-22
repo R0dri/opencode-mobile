@@ -7,18 +7,29 @@
  * - Mobile connects: tunnel → OpenCode (SSE), or LAN → plugin (push tokens)
  */
 
-console.log("\n=== opencode-mobile DEV ===");
-console.log("LAN-only architecture: plugin handles push tokens, tunnel goes to OpenCode directly");
+const DEBUG_ENABLED = process.env.OPENCODE_MOBILE_DEBUG === "1";
+const debugLog = (...args: unknown[]): void => {
+  if (DEBUG_ENABLED) {
+    console.log(...args);
+  }
+};
 
+debugLog("\n=== opencode-mobile DEV ===");
+debugLog("LAN-only architecture: plugin handles push tokens, tunnel goes to OpenCode directly");
+debugLog("[PushPlugin][Mobile] Entry loaded: index.ts");
+
+import * as fs from "fs";
 import * as path from "path";
 import http from "http";
 
+import { tool } from "@opencode-ai/plugin";
 import type { Plugin } from "@opencode-ai/plugin";
 import type { PushToken } from "./src/push";
 import { loadTokens, saveTokens } from "./src/push/token-store";
 import { startLocaltunnel, stopLocaltunnel, getLocaltunnelUrl } from "./src/tunnel/localtunnel";
-import { displayQRCode } from "./src/tunnel/qrcode";
+import { displayQRCode, generateQRCodeAscii, generateQRCodeAsciiPlain } from "./src/tunnel/qrcode";
 import { startNgrokTunnel, stopNgrokTunnel } from "./src/tunnel/ngrok";
+import { updateTunnelMetadata, clearTunnelMetadata, loadTunnelMetadata } from "./src/tunnel/metadata";
 
 const CONFIG_DIR = path.join(process.env.HOME || "", ".config/opencode");
 
@@ -31,6 +42,213 @@ const cors = {
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
+
+const MOBILE_COMMAND = "mobile";
+
+function formatMobileQrMessage(url: string, qr: string): string {
+  if (!qr) {
+    return url;
+  }
+
+  return `${qr}\n${url}`;
+}
+
+function loadTunnelUrlFromPath(tunnelPath: string): string | null {
+  try {
+    if (!fs.existsSync(tunnelPath)) {
+      return null;
+    }
+    const raw = fs.readFileSync(tunnelPath, "utf-8");
+    const data = JSON.parse(raw) as { url?: string | null };
+    if (typeof data.url === "string" && data.url.startsWith("http")) {
+      return data.url;
+    }
+  } catch (error: unknown) {
+    console.error("[PushPlugin] Failed to read tunnel path:", error);
+  }
+  return null;
+}
+
+const mobileTool = tool({
+  description: "Generate a mobile connection QR code",
+  args: {
+    url: tool.schema.string().optional().describe("Tunnel URL to render as QR"),
+    tunnelPath: tool.schema
+      .string()
+      .optional()
+      .describe("Path to tunnel.json containing a URL"),
+  },
+  async execute(args) {
+    const rawUrl = args.url?.trim();
+    const urlFromPath = args.tunnelPath ? loadTunnelUrlFromPath(args.tunnelPath) : null;
+    const metadataUrl = loadTunnelMetadata().url;
+    const url = rawUrl || urlFromPath || metadataUrl || "";
+
+    if (!url || !url.startsWith("http")) {
+      return "No tunnel URL found.";
+    }
+
+    const qr = await generateQRCodeAsciiPlain(url) || await generateQRCodeAscii(url);
+    return formatMobileQrMessage(url, qr);
+  },
+});
+
+async function publishReply(
+  ctx: Parameters<Plugin>[0],
+  sessionID: string | undefined,
+  message: string,
+  messageID?: string
+): Promise<void> {
+  try {
+    const rawCtx = ctx as any;
+    const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
+    const directory = rawCtx?.directory ?? rawCtx?.worktree;
+    const sessionApi = client?.Session ?? client?.session;
+    const prompt = sessionApi?.prompt?.bind(sessionApi)
+      ?? sessionApi?.message?.bind(sessionApi)
+      ?? sessionApi?.create?.bind(sessionApi);
+    if (typeof prompt !== "function") {
+        debugLog("[PushPlugin] Reply client keys:", Object.keys(client || {}));
+        debugLog("[PushPlugin] Reply session keys:", Object.keys(sessionApi || {}));
+      throw new Error("Session prompt API unavailable");
+    }
+
+    const doPrompt = async (): Promise<void> => {
+      await prompt({
+        path: { id: sessionID },
+        query: directory ? { directory } : undefined,
+        body: {
+          messageID,
+          noReply: true,
+          parts: [
+            {
+              type: "text",
+              text: message,
+            },
+          ],
+        },
+      });
+    };
+
+    let attempt = 0;
+    while (true) {
+      try {
+        if (!sessionID) {
+          console.log("[PushPlugin] No sessionID to send reply");
+          return;
+        }
+        await doPrompt();
+        break;
+      } catch (error: any) {
+        const errorMessage = error?.message || "";
+        const isNotFound = error?.name === "NotFoundError" || errorMessage.includes("Resource not found");
+        attempt += 1;
+        if (!isNotFound || attempt >= 4) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+      }
+    }
+  } catch (error: any) {
+    const errorMessage = error?.message || error;
+    console.error("[PushPlugin] Failed to publish reply:", errorMessage);
+    const rawCtx = ctx as any;
+    const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
+    const tui = client?.tui ?? client?.Tui;
+    const showToast = tui?.showToast?.bind(tui);
+    const publish = tui?.publish?.bind(tui);
+    if (typeof showToast === "function" || typeof publish === "function") {
+      const urlMatch = typeof message === "string" ? message.match(/https?:\/\/\S+/) : null;
+      const toastMessage = urlMatch ? `QR ready: ${urlMatch[0]}` : "Reply failed. QR printed in terminal.";
+      const body = {
+        title: "OpenCode Mobile",
+        message: toastMessage,
+        variant: "warning",
+        duration: 8000,
+      };
+      try {
+        if (typeof showToast === "function") {
+          await showToast({ body });
+        } else if (typeof publish === "function") {
+          await publish({ body: { type: "tui.toast.show", properties: body } });
+        }
+      } catch (toastError: any) {
+        console.error("[PushPlugin] Failed to show toast:", toastError?.message || toastError);
+      }
+    }
+  }
+}
+
+async function publishToTui(ctx: Parameters<Plugin>[0], text: string): Promise<void> {
+  try {
+    const rawCtx = ctx as any;
+    const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
+    const tui = client?.tui ?? client?.Tui;
+    const publish = tui?.publish?.bind(tui);
+    if (typeof publish !== "function") {
+      return;
+    }
+
+    await publish({ body: { type: "tui.prompt.append", properties: { text } } });
+  } catch (error: any) {
+    console.error("[PushPlugin] Failed to publish TUI prompt:", error?.message || error);
+  }
+}
+
+function registerPushToken(token: string): { added: boolean; total: number } {
+  const trimmed = token.trim();
+  const tokens = loadTokens();
+  const existingIndex = tokens.findIndex((t) => t.token === trimmed || t.deviceId === trimmed);
+  const now = new Date().toISOString();
+
+  const newToken: PushToken = {
+    token: trimmed,
+    platform: "ios",
+    deviceId: trimmed,
+    registeredAt: now,
+  };
+
+  if (existingIndex >= 0) {
+    tokens[existingIndex] = { ...tokens[existingIndex], ...newToken };
+    saveTokens(tokens);
+    return { added: false, total: tokens.length };
+  }
+
+  tokens.push(newToken);
+  saveTokens(tokens);
+  return { added: true, total: tokens.length };
+}
+
+async function handleMobileCommand(
+  ctx: Parameters<Plugin>[0],
+  args: string,
+  sessionID: string | undefined,
+  messageID?: string
+): Promise<void> {
+  const trimmed = args.trim();
+
+  if (!trimmed) {
+    const metadata = loadTunnelMetadata();
+    if (!metadata.url) {
+      debugLog("[Tunnel] No tunnel URL found in tunnel.json");
+      await publishReply(ctx, sessionID, "No tunnel URL found.", messageID);
+      return;
+    }
+
+    debugLog("[Tunnel] /mobile displaying QR for:", metadata.url);
+    await displayQRCode(metadata.url);
+    const qr = await generateQRCodeAsciiPlain(metadata.url) || await generateQRCodeAscii(metadata.url);
+    const message = formatMobileQrMessage(metadata.url, qr);
+    await publishToTui(ctx, message);
+    await publishReply(ctx, sessionID, message, messageID);
+    return;
+  }
+
+  const result = registerPushToken(trimmed);
+  const action = result.added ? "Registered" : "Updated";
+    debugLog(`[Push] ${action} token via /mobile (count=${result.total})`);
+  await publishReply(ctx, sessionID, `Push token ${action.toLowerCase()}.`, messageID);
+}
 
 /**
  * Handle push-token requests (LAN only)
@@ -132,7 +350,16 @@ async function handleTunnel(req: http.IncomingMessage, res: http.ServerResponse,
       
       activeTunnel = tunnel;
       await displayQRCode(tunnel.url);
-      
+
+      // Save tunnel metadata to .config/opencode/tunnel.json
+      updateTunnelMetadata(
+        tunnel.url,
+        tunnel.tunnelId,
+        tunnel.provider,
+        tunnel.port,
+        targetPort
+      );
+
       res.writeHead(200, { ...cors, "Content-Type": "application/json" });
       res.end(JSON.stringify({
         success: true,
@@ -160,6 +387,10 @@ async function handleTunnel(req: http.IncomingMessage, res: http.ServerResponse,
         await stopLocaltunnel();
       }
       activeTunnel = null;
+
+      // Clear tunnel metadata from .config/opencode/tunnel.json
+      clearTunnelMetadata();
+
       console.log("[Tunnel] Stopped");
       res.writeHead(200, { ...cors, "Content-Type": "application/json" });
       res.end(JSON.stringify({ success: true }));
@@ -172,6 +403,9 @@ async function handleTunnel(req: http.IncomingMessage, res: http.ServerResponse,
   }
 
   if (req.url === "/tunnel" && req.method === "GET") {
+    // Load stored metadata from .config/opencode/tunnel.json
+    const storedMetadata = loadTunnelMetadata();
+
     if (activeTunnel) {
       res.writeHead(200, { ...cors, "Content-Type": "application/json" });
       res.end(JSON.stringify({
@@ -179,24 +413,30 @@ async function handleTunnel(req: http.IncomingMessage, res: http.ServerResponse,
         url: activeTunnel.url,
         tunnelId: activeTunnel.tunnelId,
         port: activeTunnel.port,
-        targetPort: openCodePort
+        targetPort: openCodePort,
+        metadata: storedMetadata
       }));
       return;
     }
-    
+
     const localtunnelUrl = getLocaltunnelUrl();
     if (localtunnelUrl) {
       res.writeHead(200, { ...cors, "Content-Type": "application/json" });
       res.end(JSON.stringify({
         type: "localtunnel",
         url: localtunnelUrl,
-        tunnelId: localtunnelUrl.split("://")[1].split(".")[0]
+        tunnelId: localtunnelUrl.split("://")[1].split(".")[0],
+        metadata: storedMetadata
       }));
       return;
     }
-    
+
     res.writeHead(200, { ...cors, "Content-Type": "application/json" });
-    res.end(JSON.stringify({ type: "none", url: null }));
+    res.end(JSON.stringify({
+      type: "none",
+      url: null,
+      metadata: storedMetadata
+    }));
     return;
   }
 
@@ -240,7 +480,7 @@ async function startServer(port: number, openCodePort: number): Promise<boolean>
 
     httpServer.on("error", (err: any) => {
       if (err.code === "EADDRINUSE") {
-        console.log("[Push] Port in use, skipping");
+        debugLog("[Push] Port in use, skipping");
         resolve(false);
       } else {
         console.error("[Push] Failed:", err.message);
@@ -260,16 +500,31 @@ async function startServer(port: number, openCodePort: number): Promise<boolean>
 }
 
 export const PushNotificationPlugin: Plugin = async (ctx) => {
+  debugLog("[PushPlugin][Mobile] Initialized");
   // Check if we're running in "serve" mode (subcommand, not option)
   const isServeMode = process.argv.includes("serve");
-  console.log("[PushPlugin] isServeMode:", isServeMode);
-  console.log("[PushPlugin] process.argv:", process.argv.join(", "));
+  debugLog("[PushPlugin] isServeMode:", isServeMode);
+  debugLog("[PushPlugin] process.argv:", process.argv.join(", "));
 
   if (!isServeMode) {
-    console.log("[PushPlugin] Not in serve mode, skipping plugin");
+    debugLog("[PushPlugin] Not in serve mode, skipping plugin");
     return {
+      tool: {
+        mobile: mobileTool,
+      },
       event: async ({ event }) => {
-        // No-op when not in serve mode
+        if (event.type === "command.executed") {
+          debugLog("[PushPlugin] command.executed payload:", JSON.stringify((event as any).properties));
+        }
+        if (event.type === "command.executed" && event.properties.name === MOBILE_COMMAND) {
+          debugLog("[PushPlugin] Handling /mobile command");
+          await handleMobileCommand(
+            ctx,
+            event.properties.arguments || "",
+            event.properties.sessionID,
+            event.properties.messageID
+          );
+        }
       },
     };
   }
@@ -277,15 +532,18 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
   const openCodePort = Number((ctx as any).serverUrl?.port) || 4096;
   const pluginPort = openCodePort + 1;  // Plugin on next port
 
-  console.log("[DEV] openCodePort:", openCodePort, "| pluginPort:", pluginPort);
+  debugLog("[DEV] openCodePort:", openCodePort, "| pluginPort:", pluginPort);
 
   // Start LAN-only server
   const serverStarted = await startServer(pluginPort, openCodePort);
 
   // Only start tunnel if server started successfully (port wasn't in use)
   if (!serverStarted) {
-    console.log("[PushPlugin] Server already running, skipping plugin initialization");
+    debugLog("[PushPlugin] Server already running, skipping plugin initialization");
     return {
+      tool: {
+        mobile: mobileTool,
+      },
       event: async ({ event }) => {
         // No-op when another instance is running
       },
@@ -293,29 +551,86 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
   }
 
   // Auto-start tunnel pointing to OpenCode DIRECTLY (not through plugin!)
-  console.log("[DEV] Auto-starting tunnel...");
+  debugLog("[DEV] Auto-starting tunnel...");
   try {
     const tunnel = await startNgrokTunnel({ port: openCodePort });
-    console.log("[DEV] Tunnel started:", tunnel.url);
-    activeTunnel = tunnel;
-    await displayQRCode(tunnel.url);
-  } catch (ngrokError: any) {
-    console.log("[DEV] Ngrok failed, trying localtunnel...");
-    try {
-      const tunnel = await startLocaltunnel({ port: openCodePort });
-      console.log("[DEV] Tunnel started:", tunnel.url);
+    debugLog("[DEV] Tunnel started:", tunnel.url);
       activeTunnel = tunnel;
       await displayQRCode(tunnel.url);
-    } catch (localError: any) {
-      console.error("[DEV] All tunnels failed:", localError.message);
+
+      // Save tunnel metadata to .config/opencode/tunnel.json
+      updateTunnelMetadata(
+        tunnel.url,
+        tunnel.tunnelId,
+        tunnel.provider,
+        tunnel.port,
+        openCodePort
+      );
+    } catch (ngrokError: any) {
+      debugLog("[DEV] Ngrok failed, trying localtunnel...");
+      try {
+        const tunnel = await startLocaltunnel({ port: openCodePort });
+        debugLog("[DEV] Tunnel started:", tunnel.url);
+        activeTunnel = tunnel;
+        await displayQRCode(tunnel.url);
+
+        // Save tunnel metadata to .config/opencode/tunnel.json
+        updateTunnelMetadata(
+          tunnel.url,
+          tunnel.tunnelId,
+          tunnel.provider,
+          tunnel.port,
+          openCodePort
+        );
+      } catch (localError: any) {
+        console.error("[DEV] All tunnels failed:", localError.message);
+      }
     }
-  }
 
   return {
+    tool: {
+      mobile: mobileTool,
+    },
     event: async ({ event }) => {
-      console.log("[DEV] Event:", event.type);
+        if (event.type === "command.executed") {
+          debugLog("[PushPlugin] command.executed payload:", JSON.stringify((event as any).properties));
+        }
+        if (event.type === "command.executed" && event.properties.name === MOBILE_COMMAND) {
+          debugLog("[PushPlugin] Handling /mobile command");
+        await handleMobileCommand(
+          ctx,
+          event.properties.arguments || "",
+          event.properties.sessionID,
+          event.properties.messageID
+        );
+      }
     },
   };
 };
 
 export default PushNotificationPlugin;
+
+if (import.meta.main) {
+  const main = async () => {
+    const args = process.argv.slice(2);
+    if (args.length === 0) {
+      const metadata = loadTunnelMetadata();
+      if (!metadata.url) {
+        console.log("No tunnel URL found.");
+        process.exit(1);
+      }
+      const qr = await generateQRCodeAscii(metadata.url);
+      if (qr) {
+        console.log(`${qr}\n${metadata.url}`);
+      } else {
+        console.log(metadata.url);
+      }
+    } else {
+      const token = args.join(" ");
+      const result = registerPushToken(token);
+      const action = result.added ? "Registered" : "Updated";
+      console.log(`Push token ${action.toLowerCase()}.`);
+    }
+  };
+  main();
+}
