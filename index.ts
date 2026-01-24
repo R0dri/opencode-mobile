@@ -31,8 +31,6 @@ import { displayQRCode, generateQRCodeAscii, generateQRCodeAsciiPlain } from "./
 import { startNgrokTunnel, stopNgrokTunnel } from "./src/tunnel/ngrok";
 import { updateTunnelMetadata, clearTunnelMetadata, loadTunnelMetadata } from "./src/tunnel/metadata";
 
-const CONFIG_DIR = path.join(process.env.HOME || "", ".config/opencode");
-
 // Server state
 let httpServer: http.Server | null = null;
 let activeTunnel: { url: string; tunnelId: string; port: number; provider: string } | null = null;
@@ -44,6 +42,63 @@ const cors = {
 };
 
 const MOBILE_COMMAND = "mobile";
+
+function getMobileCommandMarkdown(): string {
+  return [
+    "---",
+    "description: OpenCode Mobile (QR + push token)",
+    "---",
+    "Call the `mobile` tool.",
+    "",
+    "Command arguments: $ARGUMENTS",
+    "",
+    "- If $ARGUMENTS is non-empty, call the tool with { token: \"$ARGUMENTS\" }.",
+    "- If $ARGUMENTS is empty, call the tool with no args to print the QR.",
+    "",
+    "Examples:",
+    "- `/mobile`",
+    "- `/mobile ExpoPushToken[xxxxxxxxxxxxxx]`",
+  ].join("\n");
+}
+
+async function ensureMobileCommandExists(ctx: Parameters<Plugin>[0]): Promise<void> {
+  const rawCtx = ctx as any;
+  const directory: string | undefined = rawCtx?.directory ?? rawCtx?.worktree;
+  if (!directory) {
+    return;
+  }
+
+  const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
+  const commandApi = client?.Command ?? client?.command;
+  const listCommands = commandApi?.list?.bind(commandApi);
+  if (typeof listCommands === "function") {
+    try {
+      const result = await listCommands({
+        query: directory ? { directory } : undefined,
+      });
+      const commands = (result as any)?.data ?? result;
+      if (Array.isArray(commands) && commands.some((c) => c?.name === MOBILE_COMMAND)) {
+        return;
+      }
+    } catch (error: unknown) {
+      debugLog("[PushPlugin] Failed to list commands:", error);
+    }
+  }
+
+  try {
+    const commandsDir = path.join(directory, ".opencode", "commands");
+    const commandPath = path.join(commandsDir, `${MOBILE_COMMAND}.md`);
+    if (fs.existsSync(commandPath)) {
+      return;
+    }
+
+    fs.mkdirSync(commandsDir, { recursive: true });
+    fs.writeFileSync(commandPath, getMobileCommandMarkdown(), "utf-8");
+    console.log(`[PushPlugin] Installed /${MOBILE_COMMAND} command at ${commandPath}`);
+  } catch (error: unknown) {
+    console.error(`[PushPlugin] Failed to install /${MOBILE_COMMAND} command:`, error);
+  }
+}
 
 function formatMobileQrMessage(url: string, qr: string): string {
   if (!qr) {
@@ -77,8 +132,19 @@ const mobileTool = tool({
       .string()
       .optional()
       .describe("Path to tunnel.json containing a URL"),
+    token: tool.schema
+      .string()
+      .optional()
+      .describe("Push token to register/update for notifications"),
   },
   async execute(args) {
+    const rawToken = args.token?.trim();
+    if (rawToken) {
+      const result = registerPushToken(rawToken);
+      const action = result.added ? "Registered" : "Updated";
+      return `Push token ${action.toLowerCase()}.`;
+    }
+
     const rawUrl = args.url?.trim();
     const urlFromPath = args.tunnelPath ? loadTunnelUrlFromPath(args.tunnelPath) : null;
     const metadataUrl = loadTunnelMetadata().url;
@@ -92,108 +158,6 @@ const mobileTool = tool({
     return formatMobileQrMessage(url, qr);
   },
 });
-
-async function publishReply(
-  ctx: Parameters<Plugin>[0],
-  sessionID: string | undefined,
-  message: string,
-  messageID?: string
-): Promise<void> {
-  try {
-    const rawCtx = ctx as any;
-    const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
-    const directory = rawCtx?.directory ?? rawCtx?.worktree;
-    const sessionApi = client?.Session ?? client?.session;
-    const prompt = sessionApi?.prompt?.bind(sessionApi)
-      ?? sessionApi?.message?.bind(sessionApi)
-      ?? sessionApi?.create?.bind(sessionApi);
-    if (typeof prompt !== "function") {
-        debugLog("[PushPlugin] Reply client keys:", Object.keys(client || {}));
-        debugLog("[PushPlugin] Reply session keys:", Object.keys(sessionApi || {}));
-      throw new Error("Session prompt API unavailable");
-    }
-
-    const doPrompt = async (): Promise<void> => {
-      await prompt({
-        path: { id: sessionID },
-        query: directory ? { directory } : undefined,
-        body: {
-          messageID,
-          noReply: true,
-          parts: [
-            {
-              type: "text",
-              text: message,
-            },
-          ],
-        },
-      });
-    };
-
-    let attempt = 0;
-    while (true) {
-      try {
-        if (!sessionID) {
-          console.log("[PushPlugin] No sessionID to send reply");
-          return;
-        }
-        await doPrompt();
-        break;
-      } catch (error: any) {
-        const errorMessage = error?.message || "";
-        const isNotFound = error?.name === "NotFoundError" || errorMessage.includes("Resource not found");
-        attempt += 1;
-        if (!isNotFound || attempt >= 4) {
-          throw error;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
-      }
-    }
-  } catch (error: any) {
-    const errorMessage = error?.message || error;
-    console.error("[PushPlugin] Failed to publish reply:", errorMessage);
-    const rawCtx = ctx as any;
-    const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
-    const tui = client?.tui ?? client?.Tui;
-    const showToast = tui?.showToast?.bind(tui);
-    const publish = tui?.publish?.bind(tui);
-    if (typeof showToast === "function" || typeof publish === "function") {
-      const urlMatch = typeof message === "string" ? message.match(/https?:\/\/\S+/) : null;
-      const toastMessage = urlMatch ? `QR ready: ${urlMatch[0]}` : "Reply failed. QR printed in terminal.";
-      const body = {
-        title: "OpenCode Mobile",
-        message: toastMessage,
-        variant: "warning",
-        duration: 8000,
-      };
-      try {
-        if (typeof showToast === "function") {
-          await showToast({ body });
-        } else if (typeof publish === "function") {
-          await publish({ body: { type: "tui.toast.show", properties: body } });
-        }
-      } catch (toastError: any) {
-        console.error("[PushPlugin] Failed to show toast:", toastError?.message || toastError);
-      }
-    }
-  }
-}
-
-async function publishToTui(ctx: Parameters<Plugin>[0], text: string): Promise<void> {
-  try {
-    const rawCtx = ctx as any;
-    const client = rawCtx?.client ?? rawCtx?.sdk ?? rawCtx;
-    const tui = client?.tui ?? client?.Tui;
-    const publish = tui?.publish?.bind(tui);
-    if (typeof publish !== "function") {
-      return;
-    }
-
-    await publish({ body: { type: "tui.prompt.append", properties: { text } } });
-  } catch (error: any) {
-    console.error("[PushPlugin] Failed to publish TUI prompt:", error?.message || error);
-  }
-}
 
 function registerPushToken(token: string): { added: boolean; total: number } {
   const trimmed = token.trim();
@@ -217,37 +181,6 @@ function registerPushToken(token: string): { added: boolean; total: number } {
   tokens.push(newToken);
   saveTokens(tokens);
   return { added: true, total: tokens.length };
-}
-
-async function handleMobileCommand(
-  ctx: Parameters<Plugin>[0],
-  args: string,
-  sessionID: string | undefined,
-  messageID?: string
-): Promise<void> {
-  const trimmed = args.trim();
-
-  if (!trimmed) {
-    const metadata = loadTunnelMetadata();
-    if (!metadata.url) {
-      debugLog("[Tunnel] No tunnel URL found in tunnel.json");
-      await publishReply(ctx, sessionID, "No tunnel URL found.", messageID);
-      return;
-    }
-
-    debugLog("[Tunnel] /mobile displaying QR for:", metadata.url);
-    await displayQRCode(metadata.url);
-    const qr = await generateQRCodeAsciiPlain(metadata.url) || await generateQRCodeAscii(metadata.url);
-    const message = formatMobileQrMessage(metadata.url, qr);
-    await publishToTui(ctx, message);
-    await publishReply(ctx, sessionID, message, messageID);
-    return;
-  }
-
-  const result = registerPushToken(trimmed);
-  const action = result.added ? "Registered" : "Updated";
-    debugLog(`[Push] ${action} token via /mobile (count=${result.total})`);
-  await publishReply(ctx, sessionID, `Push token ${action.toLowerCase()}.`, messageID);
 }
 
 /**
@@ -501,6 +434,9 @@ async function startServer(port: number, openCodePort: number): Promise<boolean>
 
 export const PushNotificationPlugin: Plugin = async (ctx) => {
   debugLog("[PushPlugin][Mobile] Initialized");
+
+  await ensureMobileCommandExists(ctx);
+
   // Check if we're running in "serve" mode (subcommand, not option)
   const isServeMode = process.argv.includes("serve");
   debugLog("[PushPlugin] isServeMode:", isServeMode);
@@ -515,15 +451,6 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
       event: async ({ event }) => {
         if (event.type === "command.executed") {
           debugLog("[PushPlugin] command.executed payload:", JSON.stringify((event as any).properties));
-        }
-        if (event.type === "command.executed" && event.properties.name === MOBILE_COMMAND) {
-          debugLog("[PushPlugin] Handling /mobile command");
-          await handleMobileCommand(
-            ctx,
-            event.properties.arguments || "",
-            event.properties.sessionID,
-            event.properties.messageID
-          );
         }
       },
     };
@@ -544,7 +471,7 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
       tool: {
         mobile: mobileTool,
       },
-      event: async ({ event }) => {
+      event: async () => {
         // No-op when another instance is running
       },
     };
@@ -592,17 +519,8 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
       mobile: mobileTool,
     },
     event: async ({ event }) => {
-        if (event.type === "command.executed") {
-          debugLog("[PushPlugin] command.executed payload:", JSON.stringify((event as any).properties));
-        }
-        if (event.type === "command.executed" && event.properties.name === MOBILE_COMMAND) {
-          debugLog("[PushPlugin] Handling /mobile command");
-        await handleMobileCommand(
-          ctx,
-          event.properties.arguments || "",
-          event.properties.sessionID,
-          event.properties.messageID
-        );
+      if (event.type === "command.executed") {
+        debugLog("[PushPlugin] command.executed payload:", JSON.stringify((event as any).properties));
       }
     },
   };

@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     include: ["**/*.test.ts"],
-    exclude: ["node_modules", "dist"],
+    exclude: ["node_modules", "dist", ".opencode"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
