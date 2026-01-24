@@ -437,13 +437,20 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
 
   await ensureMobileCommandExists(ctx);
 
-  // Check if we're running in "serve" mode (subcommand, not option)
-  const isServeMode = process.argv.includes("serve");
+  // Detect serve mode: 
+  // - serverUrl present means we have a running server
+  // - NOT "attach" mode (attach connects to existing server, doesn't need tunnel)
+  const hasServerUrl = !!(ctx as any).serverUrl;
+  const isAttachMode = process.argv.includes("attach");
+  const isServeMode = hasServerUrl && !isAttachMode;
+  
+  debugLog("[PushPlugin] hasServerUrl:", hasServerUrl);
+  debugLog("[PushPlugin] isAttachMode:", isAttachMode);
   debugLog("[PushPlugin] isServeMode:", isServeMode);
   debugLog("[PushPlugin] process.argv:", process.argv.join(", "));
 
   if (!isServeMode) {
-    debugLog("[PushPlugin] Not in serve mode, skipping plugin");
+    debugLog("[PushPlugin] Not in serve mode, skipping tunnel/server");
     return {
       tool: {
         mobile: mobileTool,
