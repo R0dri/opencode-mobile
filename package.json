@@ -53,6 +53,7 @@
     "cloudflared": "^0.1.1",
     "cloudflared-tunnel": "^1.0.3",
     "expo": "^54.0.31",
+    "jsonc-parser": "^3.3.1",
     "localtunnel": "^1.8.3",
     "ngrok": "^5.0.0-beta.2",
     "qrcode": "^1.5.4",
