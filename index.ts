@@ -293,14 +293,19 @@ async function ensureMobileCommandExists(ctx: Parameters<Plugin>[0]): Promise<vo
   try {
     const commandsDir = path.join(directory, ".opencode", "commands");
     const commandPath = path.join(commandsDir, `${MOBILE_COMMAND}.md`);
-    if (fs.existsSync(commandPath)) {
+    const exists = await fs.promises
+      .access(commandPath)
+      .then(() => true)
+      .catch(() => false);
+
+    if (exists) {
       // Best-effort auto-update for our own generated command.
       try {
-        const current = fs.readFileSync(commandPath, "utf-8");
+        const current = await fs.promises.readFile(commandPath, "utf-8");
         const next = getMobileCommandMarkdown();
         const looksLikeOurs = current.includes("description: OpenCode Mobile (QR + push token)");
         if (looksLikeOurs && current.trim() !== next.trim()) {
-          fs.writeFileSync(commandPath, next, "utf-8");
+          await fs.promises.writeFile(commandPath, next, "utf-8");
           console.log(`[PushPlugin] Updated /${MOBILE_COMMAND} command at ${commandPath}`);
         }
       } catch {
@@ -309,8 +314,8 @@ async function ensureMobileCommandExists(ctx: Parameters<Plugin>[0]): Promise<vo
       return;
     }
 
-    fs.mkdirSync(commandsDir, { recursive: true });
-    fs.writeFileSync(commandPath, getMobileCommandMarkdown(), "utf-8");
+    await fs.promises.mkdir(commandsDir, { recursive: true });
+    await fs.promises.writeFile(commandPath, getMobileCommandMarkdown(), "utf-8");
     console.log(`[PushPlugin] Installed /${MOBILE_COMMAND} command at ${commandPath}`);
   } catch (error: unknown) {
     console.error(`[PushPlugin] Failed to install /${MOBILE_COMMAND} command:`, error);
@@ -656,8 +661,6 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
 
   logPluginVersion(ctx);
 
-  await ensureMobileCommandExists(ctx);
-
   // Only run the plugin LAN server + auto-tunnel in `opencode serve` mode.
   //
   // IMPORTANT:
@@ -674,6 +677,12 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
   debugLog("[PushPlugin] isAttachMode:", isAttachMode);
   debugLog("[PushPlugin] isServeMode:", isServeMode);
   debugLog("[PushPlugin] process.argv:", process.argv.join(", "));
+
+  // Never block plugin init on filesystem operations.
+  // This can hang on slow or flaky mounts (eg network filesystems).
+  setTimeout(() => {
+    void ensureMobileCommandExists(ctx);
+  }, 0);
 
   if (!isServeMode) {
     console.log(
