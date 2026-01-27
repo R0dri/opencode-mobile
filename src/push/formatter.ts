@@ -235,7 +235,7 @@ export function formatNotification(
       return {
         title: "Session Error",
         body: truncate(
-          properties?.error || properties?.message || "An error occurred",
+          String(properties?.error || properties?.message || "An error occurred"),
           100,
         ),
         data: baseData,
