@@ -2,11 +2,66 @@ import { installPluginToGlobalOpenCodeConfig, installGlobalCommand } from "./ope
 import { MOBILE_COMMAND_NAME, getMobileCommandMarkdown } from "./mobile-command.js";
 import { checkForUpdates, executeUpdate } from "./version-check.js";
 import { spawn } from "child_process";
+import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as url from "url";
 import { createInterface } from "readline";
 
 const PLUGIN_SPEC = "opencode-mobile@latest";
+
+const VALID_PROVIDERS = ["cloudflare", "ngrok", "localtunnel", "auto", "none"] as const;
+
+const TUNNEL_CONFIG_DIR = path.join(os.homedir(), ".config", "opencode-mobile");
+const TUNNEL_CONFIG_FILE = path.join(TUNNEL_CONFIG_DIR, "tunnel-config.json");
+
+/**
+ * Persist the user's --provider choice so the plugin can read it at runtime.
+ *
+ * Writing here is intentionally additive: tunnel-setup also writes this file with
+ * provider-specific extras (cloudflaredPath, mode, etc). We only persist a minimal
+ * `{ provider }` record when the install command itself is invoked with --provider
+ * but tunnel-setup didn't run (e.g. --skip-tunnel-setup, or "none").
+ */
+function persistProviderChoice(provider: string, dryRun: boolean): void {
+  const normalized = provider.toLowerCase();
+  if (!VALID_PROVIDERS.includes(normalized as (typeof VALID_PROVIDERS)[number])) {
+    return;
+  }
+  if (normalized === "none") {
+    return;
+  }
+  if (dryRun) {
+    console.log(`[Dry Run] Would persist tunnel provider "${normalized}" to ${TUNNEL_CONFIG_FILE}`);
+    return;
+  }
+
+  try {
+    if (!fs.existsSync(TUNNEL_CONFIG_DIR)) {
+      fs.mkdirSync(TUNNEL_CONFIG_DIR, { recursive: true });
+    }
+
+    let existing: Record<string, unknown> = {};
+    if (fs.existsSync(TUNNEL_CONFIG_FILE)) {
+      try {
+        existing = JSON.parse(fs.readFileSync(TUNNEL_CONFIG_FILE, "utf-8")) as Record<string, unknown>;
+      } catch {
+        existing = {};
+      }
+    }
+
+    const merged = { ...existing, provider: normalized };
+    fs.writeFileSync(TUNNEL_CONFIG_FILE, JSON.stringify(merged, null, 2));
+    try {
+      fs.chmodSync(TUNNEL_CONFIG_FILE, 0o600);
+    } catch {
+      // Ignore permission errors on Windows
+    }
+    console.log(`✅ Persisted tunnel provider "${normalized}" to ${TUNNEL_CONFIG_FILE}`);
+  } catch (error) {
+    console.error("⚠️  Failed to persist tunnel provider choice:", error instanceof Error ? error.message : error);
+  }
+}
 
 type InstallCliOptions = {
   help: boolean;
@@ -244,7 +299,25 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
     await runTunnelSetup(options);
   }
 
+  // Persist --provider choice even if tunnel-setup didn't run (e.g. --skip-tunnel-setup
+  // or provider === "none"). This ensures the runtime plugin can pick it up via
+  // ~/.config/opencode-mobile/tunnel-config.json without needing TUNNEL_PROVIDER env var.
+  if (options.provider) {
+    persistProviderChoice(options.provider, options.dryRun);
+  }
+
   console.log(`${prefix}\n🎉 Installation complete!`);
-  console.log(`${prefix}   Restart OpenCode (run \`opencode\`) to load the plugin.`);
-  console.log(`${prefix}   Use \`/mobile\` in any project to access mobile features.`);
+  console.log(`${prefix}`);
+  console.log(`${prefix}⚠️  IMPORTANT: Mobile features only work in \`opencode serve\` mode.`);
+  console.log(`${prefix}   The plain \`opencode\` TUI does NOT auto-start the tunnel, and`);
+  console.log(`${prefix}   \`/mobile\` will respond with "No tunnel URL found".`);
+  console.log(`${prefix}`);
+  console.log(`${prefix}   Start OpenCode with LAN access enabled so your phone can reach it:`);
+  console.log(`${prefix}     opencode serve --hostname 0.0.0.0 --port 4096`);
+  console.log(`${prefix}`);
+  console.log(`${prefix}   The default --hostname is 127.0.0.1, which is loopback-only and`);
+  console.log(`${prefix}   not reachable from a phone on your LAN. Use 0.0.0.0 to bind all`);
+  console.log(`${prefix}   interfaces. (Make sure your firewall allows the chosen port.)`);
+  console.log(`${prefix}`);
+  console.log(`${prefix}   Then use \`/mobile\` in any project to display the QR code.`);
 }

@@ -36,6 +36,7 @@ debugLog("LAN-only architecture: plugin handles push tokens, tunnel goes to Open
 debugLog("[PushPlugin][Mobile] Entry loaded: index.ts");
 
 import * as path from "path";
+import * as os from "os";
 import http from "http";
 
 import { tool } from "@opencode-ai/plugin";
@@ -86,14 +87,55 @@ const VALID_PROVIDERS = ["cloudflare", "ngrok", "localtunnel", "auto"] as const;
 type TunnelProvider = typeof VALID_PROVIDERS[number];
 
 /**
- * Get the configured tunnel provider from environment variable
- * Defaults to 'auto' if not set or invalid
+ * Path to persisted tunnel config (written by `opencode-mobile install --provider ...`
+ * and `opencode-mobile-tunnel-setup`).
+ */
+const TUNNEL_CONFIG_FILE = path.join(
+  os.homedir(),
+  ".config",
+  "opencode-mobile",
+  "tunnel-config.json",
+);
+
+/**
+ * Read the persisted tunnel-config.json, if any.
+ * Returns null when missing/unreadable so callers can fall back to defaults.
+ */
+function loadPersistedTunnelConfig(): { provider?: string } | null {
+  try {
+    if (!fs.existsSync(TUNNEL_CONFIG_FILE)) return null;
+    const raw = fs.readFileSync(TUNNEL_CONFIG_FILE, "utf-8");
+    const data = JSON.parse(raw) as { provider?: unknown };
+    if (typeof data.provider === "string") {
+      return { provider: data.provider };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the configured tunnel provider.
+ *
+ * Resolution order:
+ *   1. TUNNEL_PROVIDER env var (overrides everything)
+ *   2. ~/.config/opencode-mobile/tunnel-config.json (written by install/tunnel-setup)
+ *   3. 'auto'
  */
 function getTunnelProvider(): TunnelProvider {
-  const provider = process.env.TUNNEL_PROVIDER?.toLowerCase() as TunnelProvider;
-  if (VALID_PROVIDERS.includes(provider)) {
-    return provider;
+  const envProvider = process.env.TUNNEL_PROVIDER?.toLowerCase() as TunnelProvider;
+  if (VALID_PROVIDERS.includes(envProvider)) {
+    return envProvider;
   }
+
+  const persisted = loadPersistedTunnelConfig();
+  const persistedProvider = persisted?.provider?.toLowerCase() as TunnelProvider;
+  if (persistedProvider && VALID_PROVIDERS.includes(persistedProvider)) {
+    debugLog(`[Tunnel] Using persisted provider from ${TUNNEL_CONFIG_FILE}: ${persistedProvider}`);
+    return persistedProvider;
+  }
+
   return "auto";
 }
 
@@ -456,7 +498,18 @@ const mobileTool = tool({
     const url = rawUrl || urlFromPath || metadataUrl || "";
 
     if (!url || !url.startsWith("http")) {
-      return "No tunnel URL found.";
+      return [
+        "No tunnel URL found.",
+        "",
+        "The mobile tunnel only auto-starts when OpenCode is launched in `serve` mode.",
+        "If you started OpenCode with the plain `opencode` TUI (or `opencode attach`), the",
+        "plugin's LAN server and tunnel were not initialized.",
+        "",
+        "Start the server with LAN access enabled:",
+        "  opencode serve --hostname 0.0.0.0 --port 4096",
+        "",
+        "Then run `/mobile` again to display the QR code.",
+      ].join("\n");
     }
 
     const qr = await generateQRCodeAsciiPlain(url);
@@ -768,8 +821,15 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
 
   if (!isServeMode) {
     console.log(
-      "[opencode-mobile] Plugin init OK; skipping (not in 'serve' mode). " +
-        "Run: opencode serve ...",
+      "[opencode-mobile] Plugin loaded in non-serve mode (TUI/attach). " +
+        "Tunnel + LAN server are NOT started here.",
+    );
+    console.log(
+      "[opencode-mobile] To enable mobile features (QR + push), restart OpenCode with:",
+    );
+    console.log("[opencode-mobile]   opencode serve --hostname 0.0.0.0 --port 4096");
+    console.log(
+      "[opencode-mobile] (--hostname 0.0.0.0 is required so your phone can reach the server over LAN.)",
     );
     return {
       tool: {
