@@ -2,8 +2,8 @@
  * Push notification sender
  */
 
-import type { Notification } from "./types";
-import { loadTokens, saveTokens } from "./token-store";
+import type { Notification } from "./types.js";
+import { loadTokens, saveTokens } from "./token-store.js";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 

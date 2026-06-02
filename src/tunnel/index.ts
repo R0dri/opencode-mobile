@@ -3,24 +3,24 @@
  */
 
 import * as fs from "fs";
-import type { TunnelConfig, TunnelInfo, TunnelDetails } from "./types";
+import type { TunnelConfig, TunnelInfo, TunnelDetails } from "./types.js";
 import { 
   startNgrokTunnel, 
   stopNgrokTunnel, 
   diagnoseNgrok, 
   ensureNgrokReady 
-} from "./ngrok";
+} from "./ngrok.js";
 import { 
   startLocaltunnel, 
   stopLocaltunnel, 
   getLocaltunnelUrl 
-} from "./localtunnel";
+} from "./localtunnel.js";
 import { 
   startCloudflareTunnel, 
   stopCloudflareTunnel, 
   getCloudflareUrl 
-} from "./cloudflare";
-import { displayQRCode } from "./qrcode";
+} from "./cloudflare.js";
+import { displayQRCode } from "./qrcode.js";
 
 let currentTunnel: TunnelInfo | null = null;
 

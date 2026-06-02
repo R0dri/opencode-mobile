@@ -12,7 +12,7 @@ import { spawn, ChildProcess, execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import type { TunnelConfig, TunnelInfo } from "./types";
+import type { TunnelConfig, TunnelInfo } from "./types.js";
 
 // Export types for external use
 export type { TunnelConfig, TunnelInfo };

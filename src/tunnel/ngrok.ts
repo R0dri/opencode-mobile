@@ -6,7 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
 import * as ngrok from "@ngrok/ngrok";
-import type { TunnelConfig, TunnelInfo, NgrokDiagnostics } from "./types";
+import type { TunnelConfig, TunnelInfo, NgrokDiagnostics } from "./types.js";
 
 let ngrokInstance: any = null;
 let ngrokSession: any = null;

@@ -2,4 +2,4 @@
  * Proxy module barrel export
  */
 
-export * from "./types";
+export * from "./types.js";

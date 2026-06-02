@@ -8,7 +8,7 @@
  */
 
 import localtunnel from "localtunnel";
-import type { TunnelConfig, TunnelInfo } from "./types";
+import type { TunnelConfig, TunnelInfo } from "./types.js";
 
 // Export the type for external use
 export type { TunnelConfig, TunnelInfo };

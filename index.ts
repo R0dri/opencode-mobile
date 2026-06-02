@@ -40,15 +40,15 @@ import http from "http";
 
 import { tool } from "@opencode-ai/plugin";
 import type { Plugin } from "@opencode-ai/plugin";
-import type { PushToken } from "./src/push";
-import { formatNotification } from "./src/push/formatter";
-import { sendPush } from "./src/push/sender";
-import { loadTokens, saveTokens } from "./src/push/token-store";
-import { startLocaltunnel, stopLocaltunnel, getLocaltunnelUrl } from "./src/tunnel/localtunnel";
-import { displayQRCode, generateQRCodeAscii, generateQRCodeAsciiPlain } from "./src/tunnel/qrcode";
-import { startNgrokTunnel, stopNgrokTunnel, isNgrokInstalled } from "./src/tunnel/ngrok";
-import { startCloudflareTunnel, stopCloudflareTunnel, getCloudflareUrl, isCloudflareInstalled } from "./src/tunnel/cloudflare";
-import { updateTunnelMetadata, clearTunnelMetadata, loadTunnelMetadata } from "./src/tunnel/metadata";
+import type { PushToken } from "./src/push/index.js";
+import { formatNotification } from "./src/push/formatter.js";
+import { sendPush } from "./src/push/sender.js";
+import { loadTokens, saveTokens } from "./src/push/token-store.js";
+import { startLocaltunnel, stopLocaltunnel, getLocaltunnelUrl } from "./src/tunnel/localtunnel.js";
+import { displayQRCode, generateQRCodeAscii, generateQRCodeAsciiPlain } from "./src/tunnel/qrcode.js";
+import { startNgrokTunnel, stopNgrokTunnel, isNgrokInstalled } from "./src/tunnel/ngrok.js";
+import { startCloudflareTunnel, stopCloudflareTunnel, getCloudflareUrl, isCloudflareInstalled } from "./src/tunnel/cloudflare.js";
+import { updateTunnelMetadata, clearTunnelMetadata, loadTunnelMetadata } from "./src/tunnel/metadata.js";
 
 function logPluginVersion(ctx: Parameters<Plugin>[0]): void {
   const client = (ctx as any)?.client;

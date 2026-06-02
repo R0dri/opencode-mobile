@@ -2,9 +2,9 @@
  * Notification formatting utilities
  */
 
-import type { Notification, NotificationEvent, PluginContext } from "./types";
-import { truncate } from "./token-store";
-import { loadFilterConfig, shouldFilterSession } from "./filters";
+import type { Notification, NotificationEvent, PluginContext } from "./types.js";
+import { truncate } from "./token-store.js";
+import { loadFilterConfig, shouldFilterSession } from "./filters.js";
 
 const DEBUG_ENABLED = process.env.OPENCODE_MOBILE_DEBUG === "1";
 const debugLog = (...args: unknown[]): void => {
