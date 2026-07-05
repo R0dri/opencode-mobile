@@ -757,19 +757,26 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
   //   proxy for "serve mode" and will cause ngrok/localtunnel to start unexpectedly.
   // - Bun preserves the OpenCode subcommand tokens in `process.argv` (serve/debug/wait/etc),
   //   so we gate on the presence of the literal `serve` token.
+  //
+  // ESCAPE HATCH: Some OpenCode versions/entrypoints strip subcommand tokens from
+  // `process.argv` (observed on opencode >= 1.17.x when running the TUI). The gate then
+  // never trips and `/mobile` reports "No tunnel URL found." Users can set
+  // `OPENCODE_MOBILE_FORCE_TUNNEL=1` to bypass the gate and always start a tunnel.
   const hasServerUrl = !!(ctx as any)?.serverUrl;
   const isAttachMode = process.argv.includes("attach");
   const isServeMode = process.argv.includes("serve") && !isAttachMode;
+  const forceTunnel = process.env.OPENCODE_MOBILE_FORCE_TUNNEL === "1";
 
   debugLog("[PushPlugin] hasServerUrl:", hasServerUrl);
   debugLog("[PushPlugin] isAttachMode:", isAttachMode);
   debugLog("[PushPlugin] isServeMode:", isServeMode);
+  debugLog("[PushPlugin] forceTunnel:", forceTunnel);
   debugLog("[PushPlugin] process.argv:", process.argv.join(", "));
 
-  if (!isServeMode) {
+  if (!isServeMode && !forceTunnel) {
     console.log(
       "[opencode-mobile] Plugin init OK; skipping (not in 'serve' mode). " +
-        "Run: opencode serve ...",
+        "Run: opencode serve ... — or set OPENCODE_MOBILE_FORCE_TUNNEL=1 to override.",
     );
     return {
       tool: {

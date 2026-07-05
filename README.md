@@ -131,6 +131,7 @@ https://your-tunnel-url.ngrok.io
 |----------|-------------|---------|
 | `TUNNEL_PROVIDER` | Tunnel provider (`auto`, `ngrok`, `cloudflare`, `localtunnel`) | `auto` |
 | `OPENCODE_MOBILE_DEBUG` | Enable debug logging (`1` to enable) | disabled |
+| `OPENCODE_MOBILE_FORCE_TUNNEL` | Bypass the `opencode serve` argv gate and always start a tunnel (`1` to enable). Use when the plugin logs `skipping (not in 'serve' mode)` but you *know* you're in a session that should tunnel — e.g. some OpenCode >= 1.17.x TUI entrypoints strip the `serve` token from `process.argv`. | disabled |
 | `OPENCODE_PORT` | Local server port | `3000` |
 
 ### Tunnel Providers
