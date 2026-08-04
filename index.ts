@@ -49,6 +49,7 @@ import { displayQRCode, generateQRCodeAscii, generateQRCodeAsciiPlain } from "./
 import { startNgrokTunnel, stopNgrokTunnel, isNgrokInstalled } from "./src/tunnel/ngrok";
 import { startCloudflareTunnel, stopCloudflareTunnel, getCloudflareUrl, isCloudflareInstalled } from "./src/tunnel/cloudflare";
 import { updateTunnelMetadata, clearTunnelMetadata, loadTunnelMetadata } from "./src/tunnel/metadata";
+import { getTunnelProvider, TUNNEL_PROVIDERS } from "./src/tunnel/config";
 
 function logPluginVersion(ctx: Parameters<Plugin>[0]): void {
   const client = (ctx as any)?.client;
@@ -79,31 +80,21 @@ function logPluginVersion(ctx: Parameters<Plugin>[0]): void {
 
 // Server state
 let httpServer: http.Server | null = null;
-let activeTunnel: { url: string; tunnelId: string; port: number; provider: string } | null = null;
-
-// Tunnel provider configuration
-const VALID_PROVIDERS = ["cloudflare", "ngrok", "localtunnel", "auto"] as const;
-type TunnelProvider = typeof VALID_PROVIDERS[number];
-
-/**
- * Get the configured tunnel provider from environment variable
- * Defaults to 'auto' if not set or invalid
- */
-function getTunnelProvider(): TunnelProvider {
-  const provider = process.env.TUNNEL_PROVIDER?.toLowerCase() as TunnelProvider;
-  if (VALID_PROVIDERS.includes(provider)) {
-    return provider;
-  }
-  return "auto";
-}
+type ActiveTunnel = { url: string; tunnelId: string; port: number; provider: string };
+let activeTunnel: ActiveTunnel | null = null;
 
 /**
  * Start a tunnel with fallback logic based on TUNNEL_PROVIDER env var
  * - 'auto': Try cloudflare → ngrok → localtunnel (in order of trustworthiness)
  * - Specific provider: Try only that provider
  */
-async function startTunnelWithFallback(port: number): Promise<{ url: string; tunnelId: string; port: number; provider: string }> {
+async function startTunnelWithFallback(port: number): Promise<ActiveTunnel | null> {
   const provider = getTunnelProvider();
+
+  if (provider === "none") {
+    console.log("[Tunnel] Disabled by configuration; no public tunnel will be started.");
+    return null;
+  }
 
   if (provider === "auto") {
     console.log("[Tunnel] Auto mode: selecting provider in order of security (cloudflare → ngrok → localtunnel)...");
@@ -169,7 +160,7 @@ async function startTunnelWithFallback(port: number): Promise<{ url: string; tun
       return tunnel;
     }
     default:
-      throw new Error(`Unknown tunnel provider: ${provider}. Valid options: ${VALID_PROVIDERS.join(", ")}`);
+      throw new Error(`Unknown tunnel provider: ${provider}. Valid options: ${TUNNEL_PROVIDERS.join(", ")}`);
   }
 }
 
@@ -578,6 +569,17 @@ async function handleTunnel(req: http.IncomingMessage, res: http.ServerResponse,
       console.log("[Tunnel] Starting to port:", targetPort);
 
       const tunnel = await startTunnelWithFallback(targetPort);
+      if (!tunnel) {
+        activeTunnel = null;
+        clearTunnelMetadata();
+        res.writeHead(409, { ...cors, "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          success: false,
+          disabled: true,
+          error: "Tunnel creation is disabled by configuration",
+        }));
+        return;
+      }
       activeTunnel = tunnel;
       await displayQRCode(tunnel.url);
 
@@ -806,18 +808,23 @@ export const PushNotificationPlugin: Plugin = async (ctx) => {
   debugLog("[DEV] Auto-starting tunnel...");
   try {
     const tunnel = await startTunnelWithFallback(openCodePort);
-    debugLog("[DEV] Tunnel started:", tunnel.url);
-    activeTunnel = tunnel;
-    await displayQRCode(tunnel.url);
+    if (!tunnel) {
+      activeTunnel = null;
+      clearTunnelMetadata();
+    } else {
+      debugLog("[DEV] Tunnel started:", tunnel.url);
+      activeTunnel = tunnel;
+      await displayQRCode(tunnel.url);
 
-    // Save tunnel metadata to .config/opencode/tunnel.json
-    updateTunnelMetadata(
-      tunnel.url,
-      tunnel.tunnelId,
-      tunnel.provider,
-      tunnel.port,
-      openCodePort
-    );
+      // Save tunnel metadata to .config/opencode/tunnel.json
+      updateTunnelMetadata(
+        tunnel.url,
+        tunnel.tunnelId,
+        tunnel.provider,
+        tunnel.port,
+        openCodePort
+      );
+    }
   } catch (tunnelError: any) {
     console.error("[DEV] Failed to start tunnel:", tunnelError.message);
   }

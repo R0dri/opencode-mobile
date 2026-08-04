@@ -129,7 +129,7 @@ https://your-tunnel-url.ngrok.io
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `TUNNEL_PROVIDER` | Tunnel provider (`auto`, `ngrok`, `cloudflare`, `localtunnel`) | `auto` |
+| `TUNNEL_PROVIDER` | Tunnel provider (`auto`, `ngrok`, `cloudflare`, `localtunnel`, `none`) | persisted config or `auto` |
 | `OPENCODE_MOBILE_DEBUG` | Enable debug logging (`1` to enable) | disabled |
 | `OPENCODE_PORT` | Local server port | `3000` |
 
@@ -140,6 +140,27 @@ The plugin automatically tries providers in this order:
 1. **Cloudflare** - Recommended, secure default
 2. **ngrok** - Popular tunnel service (requires auth token)
 3. **Localtunnel** - Simple, free tunnel option
+
+The installer saves the selected provider in
+`~/.config/opencode-mobile/tunnel-config.json`. `TUNNEL_PROVIDER` overrides
+that file when set.
+
+To use an existing LAN, Tailscale, or private reverse-proxy URL without opening
+a public tunnel:
+
+```bash
+npx opencode-mobile install --yes --provider none
+opencode serve --hostname 127.0.0.1 --port 4096
+```
+
+Then register the app's push token with the URL reachable from the phone:
+
+```text
+/mobile ExponentPushToken[xxx] ServerUrl[https://opencode.example.com]
+```
+
+With `none`, the plugin clears stale tunnel metadata and never falls back to
+Cloudflare, ngrok, or Localtunnel.
 
 ### Automated/CI Install Examples
 

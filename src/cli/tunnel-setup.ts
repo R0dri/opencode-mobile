@@ -650,7 +650,7 @@ async function selectProvider(): Promise<Provider> {
   console.log("     • ⚠️  Security concerns (use for dev only)");
   console.log("");
   console.log("  4) ❌ None / Skip");
-  console.log("     • I'll configure tunnels manually later");
+  console.log("     • Disable automatic tunnels (LAN, VPN, or custom reverse proxy)");
   console.log("");
 
   const choice = await prompt("Enter choice (1-4): ");
@@ -700,7 +700,8 @@ async function runTui(): Promise<void> {
       await setupLocaltunnel();
       break;
     case "none":
-      console.log("\n✅ Setup skipped. You can run this again anytime with:");
+      saveConfig({ provider: "none" });
+      console.log("\n✅ Automatic tunnels disabled. You can run setup again anytime with:");
       console.log("   npx tunnel-setup");
       break;
   }
@@ -736,11 +737,13 @@ async function runNoTui(options: CliOptions): Promise<void> {
       await setupLocaltunnel();
       break;
     case "none":
+      saveConfig({ provider: "none" });
       console.log(
         JSON.stringify(
           {
             status: "success",
-            message: "Setup skipped",
+            message: "Automatic tunnels disabled",
+            config: { provider: "none" },
           },
           null,
           2
